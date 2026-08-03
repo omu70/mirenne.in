@@ -1,0 +1,248 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   MIRENNE — design tokens
+   The house's real identity, per the brand guidelines: warm terracotta and
+   brown against a cream ground. --color-ink/gold/etc. are the same token
+   names the whole codebase already styles against — only the values change,
+   from the placeholder monochrome scale to the brand's own palette
+   (#763400 / #934C14 / #DA884E / #FCDBB2 / #FFCB9F / #EDE6CF), plus a small
+   set of precisely-blended tints/shades derived from those six colors to
+   cover the extra surface/border/text steps a full UI needs. No dark mode —
+   the palette is deliberate.
+   ========================================================================== */
+
+@theme {
+  /* type — Prata (serif, headlines/titles/logo) + Poppins (everything else,
+     including the tracked-caps UI-label role Jost used to serve) per the
+     brand guidelines, which define only these two typefaces. */
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Prata", ui-serif, Georgia, serif;
+  --font-nav: "Poppins", "Helvetica Neue", Arial, sans-serif;
+
+  /* color — backgrounds (from the brand's own light colors) */
+  --color-ivory: #ede6cf;
+  --color-paper: #f7f4e9;
+  --color-beige: #fcdbb2;
+  --color-stone: #ffcb9f;
+  --color-taupe: #e4bc95;
+  --color-taupe-dark: #b78a5f;
+
+  /* color — ink / text */
+  --color-ink: #763400;
+  --color-ink-soft: #84400a;
+  --color-graphite: #8e5829;
+
+  /* color — hairlines */
+  --color-hairline: #d9c4a6;
+  --color-hairline-dark: #c9a884;
+
+  /* color — accent (brand rust/terracotta) */
+  --color-gold: #934c14;
+  --color-gold-light: #da884e;
+  --color-gold-dark: #682e00;
+
+  /* letter-spacing */
+  --tracking-luxury: 0.22em;
+  --tracking-wide-luxury: 0.32em;
+
+  /* easing */
+  --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * Everything below that sets a real CSS property (as opposed to a
+ * @keyframes definition, which isn't subject to this) is wrapped in
+ * Tailwind's own `base` or `components` layers. Tailwind's utilities live
+ * in a later layer, and unlayered CSS always beats layered CSS regardless
+ * of selector specificity — so any of this left unlayered would silently
+ * out-rank every Tailwind utility class that touches the same property
+ * (e.g. a bare `* { border-color }` reset would beat `border-transparent`,
+ * `border-ink`, etc. everywhere they're used). Layering it correctly lets
+ * utility classes override these defaults exactly as expected.
+ */
+@layer base {
+  * {
+    border-color: var(--color-hairline);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-taupe) transparent;
+  }
+
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-gold-light);
+    color: var(--color-ink);
+  }
+
+  /* thin, quiet scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-taupe);
+    border: 3px solid var(--color-ivory);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-taupe-dark);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-gold-dark);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* fine editorial label — small tracked caps used throughout the UI chrome */
+  .label-luxury {
+    font-family: var(--font-nav);
+    font-size: 0.6875rem;
+    letter-spacing: var(--tracking-luxury);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* hairline underline that draws in on hover */
+  .link-underline {
+    position: relative;
+    text-decoration: none;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    transition: right 500ms var(--ease-luxury);
+  }
+  .link-underline:hover::after {
+    right: 0;
+  }
+
+  /* subtle film-grain overlay, generated locally (see scripts/generate_art.py) */
+  .bg-grain {
+    background-image: url("/images/texture/grain.png");
+    background-repeat: repeat;
+    background-size: 220px 220px;
+  }
+}
+
+/* Radix-driven enter/exit keyframes — no animation plugin dependency */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes sheet-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes sheet-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes sheet-in-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes search-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}

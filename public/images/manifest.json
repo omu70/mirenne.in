@@ -1,0 +1,591 @@
+{
+  "generated": [
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-01.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-02.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-03.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-04.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-05.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "hero",
+      "file": "/images/mood/hero-06.jpg",
+      "width": 2000,
+      "height": 1250,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-01.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-02.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-03.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-04.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-05.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-06.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-07.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "stone-taupe-soft",
+      "mood": "light"
+    },
+    {
+      "pool": "wide",
+      "file": "/images/mood/wide-08.jpg",
+      "width": 1600,
+      "height": 900,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-01.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-02.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-03.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-04.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-05.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-06.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-07.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "stone-taupe-soft",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-08.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-09.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "gold-wash",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-10.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "taupe-dark-editorial",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-11.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ink-gold-evening",
+      "mood": "deep"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-12.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ink-veil-festive",
+      "mood": "deep"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-13.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "banner-monochrome",
+      "mood": "banner"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-14.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-15.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-16.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-17.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-18.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-19.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-20.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "stone-taupe-soft",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-21.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-22.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "gold-wash",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-23.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "taupe-dark-editorial",
+      "mood": "mid"
+    },
+    {
+      "pool": "portrait",
+      "file": "/images/mood/portrait-24.jpg",
+      "width": 1000,
+      "height": 1300,
+      "recipe": "ink-gold-evening",
+      "mood": "deep"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-01.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-02.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-03.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-04.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-05.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-06.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-07.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "stone-taupe-soft",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-08.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-09.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "gold-wash",
+      "mood": "mid"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-10.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "taupe-dark-editorial",
+      "mood": "mid"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-11.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "ink-gold-evening",
+      "mood": "deep"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-12.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "ink-veil-festive",
+      "mood": "deep"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-13.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "banner-monochrome",
+      "mood": "banner"
+    },
+    {
+      "pool": "square",
+      "file": "/images/mood/square-14.jpg",
+      "width": 1100,
+      "height": 1100,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-01.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-02.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-03.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-04.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "stone-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-05.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-06.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-07.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "stone-taupe-soft",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-08.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-09.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "gold-wash",
+      "mood": "mid"
+    },
+    {
+      "pool": "detail",
+      "file": "/images/mood/detail-10.jpg",
+      "width": 900,
+      "height": 1100,
+      "recipe": "taupe-dark-editorial",
+      "mood": "mid"
+    },
+    {
+      "pool": "atelier",
+      "file": "/images/mood/atelier-01.jpg",
+      "width": 1400,
+      "height": 1000,
+      "recipe": "ivory-gold-veil",
+      "mood": "light"
+    },
+    {
+      "pool": "atelier",
+      "file": "/images/mood/atelier-02.jpg",
+      "width": 1400,
+      "height": 1000,
+      "recipe": "paper-quiet",
+      "mood": "light"
+    },
+    {
+      "pool": "atelier",
+      "file": "/images/mood/atelier-03.jpg",
+      "width": 1400,
+      "height": 1000,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    }
+  ],
+  "collections": {
+    "evening-wear": {
+      "file": "/images/mood/collection-evening-wear.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "ink-gold-evening",
+      "mood": "deep"
+    },
+    "resort": {
+      "file": "/images/mood/collection-resort.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "beige-warm-light",
+      "mood": "light"
+    },
+    "cocktail": {
+      "file": "/images/mood/collection-cocktail.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "taupe-gold-dusk",
+      "mood": "mid"
+    },
+    "wedding-guest": {
+      "file": "/images/mood/collection-wedding-guest.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "gold-wash",
+      "mood": "mid"
+    },
+    "festive": {
+      "file": "/images/mood/collection-festive.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "ink-veil-festive",
+      "mood": "deep"
+    },
+    "vacation": {
+      "file": "/images/mood/collection-vacation.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "ivory-breeze",
+      "mood": "light"
+    },
+    "signature": {
+      "file": "/images/mood/collection-signature.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "paper-gold-hush",
+      "mood": "light"
+    }
+  },
+  "banners": {
+    "banner-desktop": {
+      "file": "/images/banner/banner-desktop.jpg",
+      "width": 2280,
+      "height": 720,
+      "recipe": "banner-monochrome",
+      "mood": "banner"
+    },
+    "banner-mobile": {
+      "file": "/images/banner/banner-mobile.jpg",
+      "width": 1200,
+      "height": 1500,
+      "recipe": "banner-monochrome",
+      "mood": "banner"
+    }
+  }
+}
