@@ -8,7 +8,6 @@ import { useContentStore } from "@/lib/store/content-store";
 
 export function Footer() {
   const aboutCopy = useContentStore((s) => s.about);
-  const collections = useContentStore((s) => s.collections);
   // Footer columns are admin-editable (see /admin/menu); a column with no
   // title and no links is treated as removed rather than rendered empty.
   const footerColumns = useContentStore((s) => s.navigation.footerColumns).filter(
@@ -52,20 +51,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-hairline pt-6">
-          <p className="label-luxury mb-4 text-gold/70">Our Collections</p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {collections.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/collections/${c.slug}`}
-                className="text-xs text-gold transition-colors hover:text-gold-dark"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </div>
+        {/* The "Our Collections" row lived here, linking to /collections/<slug>.
+            Those routes don't exist, so all seven links 404'd on every page of
+            the site. Removed rather than pointed somewhere else: no product is
+            assigned to a collection, so the pages would be empty even once the
+            routes are built. Bring this back alongside a real collections
+            route when pieces are actually grouped. */}
 
         <div className="mt-10 flex flex-col gap-6 border-t border-hairline pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-gold">© {new Date().getFullYear()} Mirenne. All rights reserved. Made in India.</p>

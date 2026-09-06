@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Collection } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { collectionHref } from "@/lib/collections/href";
 
 interface CollectionCardProps {
   collection: Collection;
@@ -13,7 +14,7 @@ interface CollectionCardProps {
 export function CollectionCard({ collection, className, priority, sizes }: CollectionCardProps) {
   return (
     <Link
-      href={`/collections/${collection.slug}`}
+      href={collectionHref(collection.slug)}
       className={cn("group relative block aspect-[4/5] overflow-hidden bg-paper", className)}
     >
       <Image

@@ -13,6 +13,7 @@ import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { collectionMap } from "@/lib/data/collections";
 import { cn, formatINR } from "@/lib/utils";
+import { collectionHref } from "@/lib/collections/href";
 import type { Product } from "@/lib/types";
 
 const AVAILABILITY_LABEL: Record<Product["availability"], string> = {
@@ -63,7 +64,7 @@ export function BuyBox({ product }: BuyBoxProps) {
     <div>
       {collection && (
         <Link
-          href={`/collections/${product.collection}`}
+          href={collectionHref(product.collection ?? "")}
           className="label-luxury text-gold transition-colors hover:text-gold-dark"
         >
           {collection.name}

@@ -3,6 +3,7 @@
 import { useContentStore, collectionsToMap } from "@/lib/store/content-store";
 import { Container } from "@/components/luxury/container";
 import { EditorialBanner } from "@/components/luxury/editorial-banner";
+import { collectionHref } from "@/lib/collections/href";
 
 export function FeaturedCollection() {
   const collections = useContentStore((s) => s.collections);
@@ -17,7 +18,7 @@ export function FeaturedCollection() {
           title={collection.name}
           description={collection.description}
           ctaLabel={`Explore ${collection.name}`}
-          ctaHref={`/collections/${collection.slug}`}
+          ctaHref={collectionHref(collection.slug)}
           align="right"
           theme="light"
           aspect="aspect-[4/5] md:aspect-[16/9]"

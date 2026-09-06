@@ -14,6 +14,7 @@ import { RecentlyViewedTracker } from "@/components/product/recently-viewed-trac
 import { useProductStore } from "@/lib/store/product-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { collectionMap } from "@/lib/data/collections";
+import { collectionHref } from "@/lib/collections/href";
 
 interface ProductPageClientProps {
   slug: string;
@@ -64,7 +65,7 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
             // A piece with no collection simply doesn't get a collection
             // crumb — the trail stays Home / Shop / <product>.
             ...(collection
-              ? [{ label: collection.name, href: `/collections/${product.collection}` }]
+              ? [{ label: collection.name, href: collectionHref(product.collection ?? "") }]
               : []),
             { label: product.name },
           ]}
