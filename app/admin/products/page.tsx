@@ -33,7 +33,11 @@ export default function AdminProductsPage() {
   const filtered = products.filter((p) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
-    return p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.collection.includes(q);
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      (p.collection?.includes(q) ?? false)
+    );
   });
 
   const openAdd = () => {
@@ -127,7 +131,9 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-graphite">{collectionMap[p.collection]?.name ?? p.collection}</td>
+                  <td className="px-4 py-3 text-graphite">
+                    {p.collection ? (collectionMap[p.collection]?.name ?? p.collection) : "—"}
+                  </td>
                   <td className="px-4 py-3 text-ink">{formatINR(p.price)}</td>
                   <td className="px-4 py-3 text-graphite capitalize">{p.availability.replace(/-/g, " ")}</td>
                   <td className="px-4 py-3 text-graphite">{p.rating.toFixed(1)}</td>

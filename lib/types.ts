@@ -25,12 +25,23 @@ export interface Product {
   id: string;
   slug: string;
   name: string;
-  collection: CollectionSlug;
+  /**
+   * Optional on purpose. A piece can sit in the catalogue without belonging
+   * to a collection — every consumer (cards, PDP breadcrumb, buy box,
+   * related products, shop filters, search) treats an absent collection as
+   * "unassigned" and simply omits the collection label rather than assuming
+   * a lookup in collectionMap will resolve.
+   */
+  collection?: CollectionSlug;
   category: string;
   price: number;
   compareAtPrice?: number;
   shortDescription: string;
   description: string;
+  /** Bulleted construction/spec points, shown as their own PDP accordion. */
+  details?: string[];
+  /** e.g. "2 (Blouse + Saree)" — what physically ships with the piece. */
+  components?: string;
   designerNote: string;
   fabric: string;
   care: string;

@@ -66,7 +66,9 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
           </div>
 
           <div className="flex flex-col p-8 md:p-10">
-            <p className="label-luxury text-gold">{collectionMap[product.collection].name}</p>
+            {product.collection && (
+              <p className="label-luxury text-gold">{collectionMap[product.collection]?.name}</p>
+            )}
             <h3 className="mt-2 font-serif text-2xl leading-tight text-gold md:text-3xl">{product.name}</h3>
             <div className="mt-3 flex items-baseline gap-3">
               <span className="text-lg text-gold">{formatINR(product.price)}</span>

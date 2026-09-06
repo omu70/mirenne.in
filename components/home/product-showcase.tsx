@@ -140,7 +140,9 @@ function ProductRow({
         </Reveal>
 
         <Reveal delay={0.1} className={cn(reversed && "lg:order-1")}>
-          <p className="label-luxury text-gold">{collectionMap[product.collection].name}</p>
+          {product.collection && (
+            <p className="label-luxury text-gold">{collectionMap[product.collection]?.name}</p>
+          )}
 
           <Link href={`/product/${product.slug}`}>
             <h3 className="mt-4 font-serif text-3xl leading-[1.1] text-gold transition-colors hover:text-gold-dark md:text-4xl">

@@ -18,6 +18,10 @@ const AVAILABILITY_OPTIONS: { value: Availability; label: string }[] = [
   { value: "made-to-order", label: "Made To Order" },
 ];
 
+// Radix's Select reserves the empty string, so "unassigned" needs a sentinel
+// value of its own rather than "".
+const NO_COLLECTION = "__none__";
+
 const SIZE_GUIDE_OPTIONS: { value: Product["sizeGuideType"]; label: string }[] = [
   { value: "standard", label: "Standard" },
   { value: "saree", label: "Saree" },
@@ -49,7 +53,7 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
   const [name, setName] = React.useState(product?.name ?? "");
   const [slug, setSlug] = React.useState(product?.slug ?? "");
   const [slugTouched, setSlugTouched] = React.useState(isEditing);
-  const [collection, setCollection] = React.useState(product?.collection ?? collections[0].slug);
+  const [collection, setCollection] = React.useState<string>(product?.collection ?? NO_COLLECTION);
   const [category, setCategory] = React.useState(product?.category ?? "");
   const [price, setPrice] = React.useState(String(product?.price ?? ""));
   const [compareAtPrice, setCompareAtPrice] = React.useState(
@@ -58,6 +62,8 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
   const [availability, setAvailability] = React.useState<Availability>(product?.availability ?? "in-stock");
   const [shortDescription, setShortDescription] = React.useState(product?.shortDescription ?? "");
   const [description, setDescription] = React.useState(product?.description ?? "");
+  const [detailsText, setDetailsText] = React.useState((product?.details ?? []).join("\n"));
+  const [components, setComponents] = React.useState(product?.components ?? "");
   const [designerNote, setDesignerNote] = React.useState(product?.designerNote ?? "");
   const [fabric, setFabric] = React.useState(product?.fabric ?? "");
   const [care, setCare] = React.useState(product?.care ?? "");
@@ -69,16 +75,19 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
   const [sizeGuideType, setSizeGuideType] = React.useState<Product["sizeGuideType"]>(
     product?.sizeGuideType ?? "standard"
   );
+  // "src | alt | WIDTHxHEIGHT" per line. Alt and dimensions are optional on
+  // input but round-trip through an edit, so opening a product and saving it
+  // no longer flattens hand-written alt text or real image dimensions.
   const [imagesText, setImagesText] = React.useState(
-    product ? product.images.map((i) => i.src).join("\n") : "/images/mood/portrait-01.jpg"
+    product
+      ? product.images.map((i) => `${i.src} | ${i.alt} | ${i.width}x${i.height}`).join("\n")
+      : "/images/products/"
   );
   const [isNew, setIsNew] = React.useState(product?.isNew ?? true);
   const [isBestSeller, setIsBestSeller] = React.useState(product?.isBestSeller ?? false);
   const [rating, setRating] = React.useState(String(product?.rating ?? "5"));
   const [reviewCount, setReviewCount] = React.useState(String(product?.reviewCount ?? "0"));
-  const [deliveryEstimate, setDeliveryEstimate] = React.useState(
-    product?.deliveryEstimate ?? "Ships in 3–5 business days"
-  );
+  const [deliveryEstimate, setDeliveryEstimate] = React.useState(product?.deliveryEstimate ?? "");
   const [tagsText, setTagsText] = React.useState(product ? product.tags.join(", ") : "");
 
   // Keep the slug preview in sync with the name for new products, unless the
@@ -120,9 +129,23 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
 
     const images = imagesText
       .split("\n")
-      .map((s) => s.trim())
+      .map((line) => line.trim())
       .filter(Boolean)
-      .map((src, i) => ({ src, alt: `${name} — view ${i + 1}`, width: 1000, height: 1300 }));
+      .map((line, i) => {
+        const [src, alt, size] = line.split("|").map((s) => s.trim());
+        const [w, h] = (size ?? "").toLowerCase().split("x").map((n) => Number(n.trim()));
+        return {
+          src,
+          alt: alt || `${name} — view ${i + 1}`,
+          width: Number.isFinite(w) && w > 0 ? w : 1600,
+          height: Number.isFinite(h) && h > 0 ? h : 2000,
+        };
+      });
+
+    const details = detailsText
+      .split("\n")
+      .map((s) => s.replace(/^[-–—•*]\s*/, "").trim())
+      .filter(Boolean);
 
     const tags = tagsText
       .split(",")
@@ -136,12 +159,14 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
       id: product?.id ?? generateProductId(),
       slug: finalSlug,
       name: name.trim(),
-      collection,
+      collection: collection === NO_COLLECTION ? undefined : (collection as Product["collection"]),
       category: category.trim() || "Piece",
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
       shortDescription: shortDescription.trim(),
       description: description.trim(),
+      details: details.length ? details : undefined,
+      components: components.trim() || undefined,
       designerNote: designerNote.trim(),
       fabric: fabric.trim(),
       care: care.trim(),
@@ -150,7 +175,9 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
       sizes: sizes.length ? sizes : ["Free Size"],
       sizeGuideType,
       availability,
-      images: images.length ? images : [{ src: "/images/mood/portrait-01.jpg", alt: name, width: 1000, height: 1300 }],
+      images: images.length
+        ? images
+        : [{ src: "/images/mood/portrait-01.jpg", alt: name, width: 1000, height: 1300 }],
       isNew,
       isBestSeller,
       rating: Math.min(5, Math.max(0, Number(rating) || 0)),
@@ -188,12 +215,13 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Collection">
-            <Select value={collection} onValueChange={(v) => setCollection(v as Product["collection"])}>
+          <Field label="Collection" hint="Optional — pieces with no collection still appear in Shop and search.">
+            <Select value={collection} onValueChange={setCollection}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NO_COLLECTION}>No collection</SelectItem>
                 {collections.map((c) => (
                   <SelectItem key={c.slug} value={c.slug}>
                     {c.name}
@@ -245,16 +273,33 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
         </Field>
 
-        <Field label="Designer's Note">
+        <Field label="Product Details" hint="One bullet per line — shown as the Product Details list on the product page.">
+          <Textarea
+            value={detailsText}
+            onChange={(e) => setDetailsText(e.target.value)}
+            rows={4}
+            placeholder={"Sweetheart neckline blouse with pearl embroidery\nOpen criss-cross back\nWaist cutout"}
+          />
+        </Field>
+
+        <Field label="No. of Components" hint="What ships with the piece, e.g. 2 (Blouse + Saree).">
+          <Input value={components} onChange={(e) => setComponents(e.target.value)} placeholder="2 (Blouse + Saree)" />
+        </Field>
+
+        <Field label="Designer's Note" hint="Leave blank to hide the designer's note section on the product page.">
           <Textarea value={designerNote} onChange={(e) => setDesignerNote(e.target.value)} rows={2} />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Fabric">
-            <Input value={fabric} onChange={(e) => setFabric(e.target.value)} placeholder="raw silk" />
+          <Field label="Fabric" hint="Leave blank to hide the fabric line.">
+            <Input value={fabric} onChange={(e) => setFabric(e.target.value)} placeholder="Net with taffeta lining (blouse)" />
           </Field>
-          <Field label="Delivery Estimate">
-            <Input value={deliveryEstimate} onChange={(e) => setDeliveryEstimate(e.target.value)} />
+          <Field label="Delivery Estimate" hint="Leave blank to show no lead time.">
+            <Input
+              value={deliveryEstimate}
+              onChange={(e) => setDeliveryEstimate(e.target.value)}
+              placeholder="Made to order — ships in 3–4 weeks"
+            />
           </Field>
         </div>
 
@@ -262,7 +307,7 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
           <Textarea value={care} onChange={(e) => setCare(e.target.value)} rows={2} />
         </Field>
 
-        <Field label="Styling Suggestion">
+        <Field label="Styling Suggestion" hint="Leave blank to hide the Styling Notes panel.">
           <Textarea value={stylingSuggestion} onChange={(e) => setStylingSuggestion(e.target.value)} rows={2} />
         </Field>
 
@@ -290,8 +335,11 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
           </Field>
         </div>
 
-        <Field label="Image URLs" hint="One per line. Paste a path like /images/mood/portrait-03.jpg or a full image URL.">
-          <Textarea value={imagesText} onChange={(e) => setImagesText(e.target.value)} rows={3} />
+        <Field
+          label="Images"
+          hint="One per line: path | alt text | WIDTHxHEIGHT. Alt text and dimensions are optional — they default to the product name and 1600x2000."
+        >
+          <Textarea value={imagesText} onChange={(e) => setImagesText(e.target.value)} rows={5} />
         </Field>
 
         <Field label="Tags" hint="Comma-separated, used by search and filters.">

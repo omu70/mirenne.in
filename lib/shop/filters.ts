@@ -143,7 +143,8 @@ export function filterProducts(list: Product[], filters: ShopFilters): Product[]
     if (filters.quickFilter === "new" && !p.isNew) return false;
     if (filters.quickFilter === "bestseller" && !p.isBestSeller) return false;
     if (filters.categories.length && !filters.categories.includes(p.category)) return false;
-    if (filters.collections.length && !filters.collections.includes(p.collection)) return false;
+    if (filters.collections.length && (!p.collection || !filters.collections.includes(p.collection)))
+      return false;
     if (filters.availability.length && !filters.availability.includes(p.availability)) return false;
     if (filters.colors.length && !p.colors.some((c) => filters.colors.includes(c.name))) return false;
     if (filters.sizes.length && !p.sizes.some((s) => filters.sizes.includes(s))) return false;
@@ -153,7 +154,7 @@ export function filterProducts(list: Product[], filters: ShopFilters): Product[]
       const hit =
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
-        p.collection.toLowerCase().includes(q) ||
+        (p.collection?.toLowerCase().includes(q) ?? false) ||
         p.tags.some((t) => t.toLowerCase().includes(q));
       if (!hit) return false;
     }

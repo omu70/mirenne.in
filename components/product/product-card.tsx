@@ -89,7 +89,9 @@ export function ProductCard({ product, priority, sizes }: ProductCardProps) {
             >
               {product.name}
             </Link>
-            <p className="mt-1 text-xs text-gold">{collectionMap[product.collection].name}</p>
+            {product.collection && (
+              <p className="mt-1 text-xs text-gold">{collectionMap[product.collection]?.name}</p>
+            )}
           </div>
           <div className="shrink-0 text-right">
             <p className="text-sm text-gold">{formatINR(product.price)}</p>

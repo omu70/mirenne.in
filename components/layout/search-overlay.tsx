@@ -38,7 +38,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
-          p.collection.toLowerCase().includes(q) ||
+          (p.collection?.toLowerCase().includes(q) ?? false) ||
           p.tags.some((t) => t.toLowerCase().includes(q))
       )
       .slice(0, 6);

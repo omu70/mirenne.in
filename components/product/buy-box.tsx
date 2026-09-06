@@ -36,8 +36,10 @@ export function BuyBox({ product }: BuyBoxProps) {
   const [quantity, setQuantity] = React.useState(1);
   const [sizeGuideOpen, setSizeGuideOpen] = React.useState(false);
 
-  const collection = collectionMap[product.collection];
+  const collection = product.collection ? collectionMap[product.collection] : undefined;
   const roundedRating = Math.round(product.rating);
+
+  const details = product.details ?? [];
 
   const handleAddToBag = () => {
     addItem(
@@ -59,11 +61,23 @@ export function BuyBox({ product }: BuyBoxProps) {
 
   return (
     <div>
-      <Link href={`/collections/${product.collection}`} className="label-luxury text-gold hover:text-gold-dark transition-colors">
-        {collection.name}
-      </Link>
+      {collection && (
+        <Link
+          href={`/collections/${product.collection}`}
+          className="label-luxury text-gold transition-colors hover:text-gold-dark"
+        >
+          {collection.name}
+        </Link>
+      )}
 
-      <h1 className="mt-3 font-serif text-3xl leading-[1.1] text-gold sm:text-4xl">{product.name}</h1>
+      <h1
+        className={cn(
+          "font-serif text-3xl leading-[1.1] text-gold sm:text-4xl",
+          collection && "mt-3"
+        )}
+      >
+        {product.name}
+      </h1>
 
       {product.reviewCount > 0 && (
         <div className="mt-3 flex w-fit items-center gap-2 text-sm text-gold">
@@ -159,7 +173,9 @@ export function BuyBox({ product }: BuyBoxProps) {
           )}
           {AVAILABILITY_LABEL[product.availability]}
         </p>
-        <p className="mt-1 text-xs text-gold">{product.deliveryEstimate}</p>
+        {product.deliveryEstimate && (
+          <p className="mt-1 text-xs text-gold">{product.deliveryEstimate}</p>
+        )}
       </div>
 
       <div className="mt-7 flex items-center gap-4">
@@ -217,17 +233,43 @@ export function BuyBox({ product }: BuyBoxProps) {
           <AccordionTrigger>Description</AccordionTrigger>
           <AccordionContent>{product.description}</AccordionContent>
         </AccordionItem>
-        <AccordionItem value="fabric">
-          <AccordionTrigger>The Fabric &amp; Care</AccordionTrigger>
-          <AccordionContent>
-            <p>{product.fabric.charAt(0).toUpperCase() + product.fabric.slice(1)}.</p>
-            <p className="mt-2">{product.care}</p>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="styling">
-          <AccordionTrigger>Styling Notes</AccordionTrigger>
-          <AccordionContent>{product.stylingSuggestion}</AccordionContent>
-        </AccordionItem>
+        {(details.length > 0 || product.components) && (
+          <AccordionItem value="details">
+            <AccordionTrigger>Product Details</AccordionTrigger>
+            <AccordionContent>
+              {details.length > 0 && (
+                <ul className="flex flex-col gap-1.5">
+                  {details.map((d) => (
+                    <li key={d} className="flex gap-2.5">
+                      <span aria-hidden="true">—</span>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {product.components && (
+                <p className={cn(details.length > 0 && "mt-3")}>
+                  <span className="text-gold-dark">No. of components:</span> {product.components}
+                </p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {(product.fabric || product.care) && (
+          <AccordionItem value="fabric">
+            <AccordionTrigger>The Fabric &amp; Care</AccordionTrigger>
+            <AccordionContent>
+              {product.fabric && <p>{product.fabric.charAt(0).toUpperCase() + product.fabric.slice(1)}</p>}
+              {product.care && <p className={cn(product.fabric && "mt-2")}>{product.care}</p>}
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {product.stylingSuggestion && (
+          <AccordionItem value="styling">
+            <AccordionTrigger>Styling Notes</AccordionTrigger>
+            <AccordionContent>{product.stylingSuggestion}</AccordionContent>
+          </AccordionItem>
+        )}
         <AccordionItem value="shipping" className="border-b-0">
           <AccordionTrigger>Shipping &amp; Returns</AccordionTrigger>
           <AccordionContent>

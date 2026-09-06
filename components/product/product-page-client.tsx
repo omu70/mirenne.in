@@ -52,7 +52,7 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
     notFound();
   }
 
-  const collection = collectionMap[product.collection];
+  const collection = product.collection ? collectionMap[product.collection] : undefined;
 
   return (
     <>
@@ -61,7 +61,11 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
           items={[
             { label: "Home", href: "/" },
             { label: "Shop", href: "/shop" },
-            { label: collection.name, href: `/collections/${product.collection}` },
+            // A piece with no collection simply doesn't get a collection
+            // crumb — the trail stays Home / Shop / <product>.
+            ...(collection
+              ? [{ label: collection.name, href: `/collections/${product.collection}` }]
+              : []),
             { label: product.name },
           ]}
           className="mb-6"
@@ -75,7 +79,7 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
         </div>
       </Container>
 
-      <DesignerNote note={product.designerNote} />
+      {product.designerNote && <DesignerNote note={product.designerNote} />}
       <RelatedProducts product={product} />
       <RecentlyViewedRail excludeSlug={product.slug} />
       <RecentlyViewedTracker slug={product.slug} />

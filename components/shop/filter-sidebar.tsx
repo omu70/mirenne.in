@@ -32,6 +32,13 @@ interface FilterSidebarProps {
 export function FilterSidebar({ filters, onChange, className }: FilterSidebarProps) {
   const categoryCounts = React.useMemo(() => getCategoryCounts(filters), [filters]);
   const collectionCounts = React.useMemo(() => getCollectionCounts(filters), [filters]);
+  // Collection is optional on a product, so a catalogue can legitimately have
+  // nothing assigned to any collection. In that case every option in this
+  // facet reads 0 and ticking one can only empty the grid — so the facet is
+  // hidden entirely rather than shown as dead UI. It reappears the moment a
+  // piece is given a collection (or one is already active in the URL).
+  const hasAnyCollection =
+    filters.collections.length > 0 || Object.values(collectionCounts).some((n) => n > 0);
   const colorCounts = React.useMemo(() => getColorCounts(filters), [filters]);
   const sizeCounts = React.useMemo(() => getSizeCounts(filters), [filters]);
   const availabilityCounts = React.useMemo(() => getAvailabilityCounts(filters), [filters]);
@@ -65,7 +72,7 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="collection">
+        <AccordionItem value="collection" className={cn(!hasAnyCollection && "hidden")}>
           <AccordionTrigger>Collection</AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col gap-3.5">
