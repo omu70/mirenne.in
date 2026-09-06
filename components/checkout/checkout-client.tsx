@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { Lock, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Check, Loader2, Lock, ShieldCheck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Container } from "@/components/luxury/container";
 import { SectionHeading } from "@/components/luxury/section-heading";
@@ -84,6 +84,76 @@ export function CheckoutClient() {
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
   const [scriptState, setScriptState] = React.useState<"loading" | "ready" | "failed">("loading");
   const [paying, setPaying] = React.useState(false);
+  // Keyed by the PIN code that produced it, so a stale result can never be
+  // shown against a newer code and the state never has to be cleared in an
+  // effect — a mismatched key just isn't rendered.
+  const [pinResult, setPinResult] = React.useState<{
+    code: string;
+    status: "looking" | "found" | "notfound" | "error";
+    area: string;
+  } | null>(null);
+
+  // Rough starting point from the request's geo headers, purely to save typing.
+  // It only fills fields still empty, so it can never overwrite something the
+  // shopper typed, and the PIN code lookup below overrides whatever it guessed.
+  // IP location is frequently wrong by a city or more (mobile networks, VPNs),
+  // which is exactly why it is a prefill and not an answer.
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/geo")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((geo) => {
+        if (cancelled || !geo || (!geo.city && !geo.state)) return;
+        setForm((f) => ({
+          ...f,
+          city: f.city.trim() ? f.city : (geo.city ?? ""),
+          state: f.state.trim() ? f.state : (geo.state ?? ""),
+        }));
+      })
+      .catch(() => {
+        // A failed guess is a non-event — the fields simply stay empty.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // PIN code is authoritative: once six digits resolve, they set the city and
+  // state, overriding anything the IP guess put there. Debounced so typing the
+  // last digits doesn't fire a request per keystroke, and every earlier
+  // in-flight lookup is cancelled so a slow response can't land after a newer one.
+  const pincode = form.pincode.trim();
+  const pincodeValid = /^[1-9][0-9]{5}$/.test(pincode);
+
+  React.useEffect(() => {
+    if (!pincodeValid) return;
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setPinResult({ code: pincode, status: "looking", area: "" });
+      fetch(`/api/pincode?code=${pincode}`)
+        .then(async (r) => ({ ok: r.ok, data: await r.json() }))
+        .then(({ ok, data }) => {
+          if (cancelled) return;
+          if (!ok) {
+            setPinResult({ code: pincode, status: data?.error === "not_found" ? "notfound" : "error", area: "" });
+            return;
+          }
+          setForm((f) => ({ ...f, city: data.city || f.city, state: data.state || f.state }));
+          setPinResult({ code: pincode, status: "found", area: data.area ?? "" });
+        })
+        .catch(() => {
+          if (!cancelled) setPinResult({ code: pincode, status: "error", area: "" });
+        });
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [pincode, pincodeValid]);
+
+  const pin = pinResult?.code === pincode ? pinResult : null;
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -315,10 +385,28 @@ export function CheckoutClient() {
                   <Input
                     id="co-pincode"
                     inputMode="numeric"
+                    maxLength={6}
                     value={form.pincode}
                     onChange={set("pincode")}
                     autoComplete="postal-code"
+                    aria-describedby="co-pincode-status"
                   />
+                  <p id="co-pincode-status" aria-live="polite" className="mt-1.5 min-h-4 text-[11px] text-gold">
+                    {pin?.status === "looking" && (
+                      <span className="flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />
+                        Looking up…
+                      </span>
+                    )}
+                    {pin?.status === "found" && (
+                      <span className="flex items-center gap-1.5">
+                        <Check className="h-3 w-3" strokeWidth={1.5} />
+                        {pin.area ? `${pin.area} — city and state filled in` : "City and state filled in"}
+                      </span>
+                    )}
+                    {pin?.status === "notfound" && "No Indian PIN code matches that number."}
+                    {pin?.status === "error" && "Couldn't check that PIN code — type the city and state."}
+                  </p>
                 </FormField>
               </div>
               <FormField label="Delivery Notes" htmlFor="co-notes" optional>
