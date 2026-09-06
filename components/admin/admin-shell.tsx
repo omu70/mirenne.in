@@ -10,6 +10,7 @@ import {
   Users,
   Home,
   Layers,
+  Menu as MenuIcon,
   LogOut,
   ExternalLink,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Homepage", href: "/admin/homepage", icon: Home },
+  { label: "Menu", href: "/admin/menu", icon: MenuIcon },
   { label: "Collections", href: "/admin/collections", icon: Layers },
 ];
 

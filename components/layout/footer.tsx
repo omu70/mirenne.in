@@ -6,29 +6,14 @@ import { Container } from "@/components/luxury/container";
 import { Logo } from "@/components/brand/logo";
 import { useContentStore } from "@/lib/store/content-store";
 
-const SHOP_LINKS = [
-  { label: "Shop All", href: "/shop" },
-  { label: "New Arrivals", href: "/shop?filter=new" },
-  { label: "Best Sellers", href: "/shop?filter=bestseller" },
-  { label: "All Collections", href: "/collections" },
-];
-
-const EXPLORE_LINKS = [
-  { label: "About Mirenne", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "Wishlist", href: "/wishlist" },
-];
-
-const CARE_LINKS = [
-  { label: "Shipping & Returns", href: "/contact#faq" },
-  { label: "Size Guide", href: "/contact#faq" },
-  { label: "FAQs", href: "/contact#faq" },
-  { label: "Book an Appointment", href: "/contact" },
-];
-
 export function Footer() {
   const aboutCopy = useContentStore((s) => s.about);
   const collections = useContentStore((s) => s.collections);
+  // Footer columns are admin-editable (see /admin/menu); a column with no
+  // title and no links is treated as removed rather than rendered empty.
+  const footerColumns = useContentStore((s) => s.navigation.footerColumns).filter(
+    (c) => c.title || c.links.length > 0
+  );
 
   return (
     <footer className="border-t border-hairline bg-paper">
@@ -47,44 +32,23 @@ export function Footer() {
           </div>
 
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:col-span-8">
-            <div>
-              <p className="label-luxury mb-5 text-gold">Shop</p>
-              <ul className="space-y-3">
-                {SHOP_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="label-luxury mb-5 text-gold">Explore</p>
-              <ul className="space-y-3">
-                {EXPLORE_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="label-luxury mb-5 text-gold">Client Care</p>
-              <ul className="space-y-3">
-                {CARE_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {footerColumns.map((column, ci) => (
+              <div key={`${column.title}-${ci}`}>
+                <p className="label-luxury mb-5 text-gold">{column.title}</p>
+                <ul className="space-y-3">
+                  {column.links.map((link, i) => (
+                    <li key={`${link.href}-${i}`}>
+                      <Link
+                        href={link.href}
+                        className="link-underline text-sm text-gold transition-colors hover:text-gold-dark"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 

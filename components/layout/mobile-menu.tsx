@@ -7,7 +7,6 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { NAV_CATEGORIES } from "@/lib/data/nav-categories";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useContentStore } from "@/lib/store/content-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
@@ -22,6 +21,11 @@ export function MobileMenu({ open, onOpenChange, onSearchClick }: MobileMenuProp
   const mounted = useMounted();
   const wishlistCount = useWishlistStore((s) => s.productIds.length);
   const collections = useContentStore((s) => s.collections);
+  const nav = useContentStore((s) => s.navigation);
+  // The mega-menu entry is a desktop hover panel; on mobile its contents are
+  // the accordion above, so it's dropped from this flat list rather than
+  // rendered as a dead link.
+  const flatLinks = nav.headerLinks.filter((l) => !l.megaMenu);
   const close = () => onOpenChange(false);
 
   return (
@@ -47,7 +51,7 @@ export function MobileMenu({ open, onOpenChange, onSearchClick }: MobileMenuProp
             <AccordionItem value="shop">
               <AccordionTrigger>Shop</AccordionTrigger>
               <AccordionContent>
-                <p className="label-luxury mb-3 mt-1 text-gold/60">Collections</p>
+                <p className="label-luxury mb-3 mt-1 text-gold/60">{nav.collectionsTitle}</p>
                 <ul className="mb-6 space-y-3.5">
                   {collections.map((c) => (
                     <li key={c.slug}>
@@ -57,9 +61,9 @@ export function MobileMenu({ open, onOpenChange, onSearchClick }: MobileMenuProp
                     </li>
                   ))}
                 </ul>
-                <p className="label-luxury mb-3 text-gold/60">Categories</p>
+                <p className="label-luxury mb-3 text-gold/60">{nav.categoriesTitle}</p>
                 <ul className="space-y-3.5">
-                  {NAV_CATEGORIES.map((cat) => (
+                  {nav.categories.map((cat) => (
                     <li key={cat}>
                       <Link href={`/shop?category=${encodeURIComponent(cat)}`} onClick={close} className="text-sm text-gold">
                         {cat}
@@ -72,15 +76,16 @@ export function MobileMenu({ open, onOpenChange, onSearchClick }: MobileMenuProp
           </Accordion>
 
           <nav className="flex flex-col divide-y divide-hairline border-t border-hairline">
-            <Link href="/" onClick={close} className="label-luxury py-4 text-gold">
-              Home
-            </Link>
-            <Link href="/about" onClick={close} className="label-luxury py-4 text-gold">
-              About
-            </Link>
-            <Link href="/contact" onClick={close} className="label-luxury py-4 text-gold">
-              Contact Us
-            </Link>
+            {flatLinks.map((link, i) => (
+              <Link
+                key={`${link.href}-${i}`}
+                href={link.href}
+                onClick={close}
+                className="label-luxury py-4 text-gold"
+              >
+                {link.label}
+              </Link>
+            ))}
             <Link href="/wishlist" onClick={close} className="label-luxury flex items-center justify-between py-4 text-gold">
               Wishlist
               {mounted && wishlistCount > 0 && <span className="text-gold">{wishlistCount}</span>}

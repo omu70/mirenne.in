@@ -94,7 +94,7 @@ function ProductRow({
         reversed ? "bg-paper" : "bg-ivory"
       )}
     >
-      <Container className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      <Container className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-16">
         <Reveal className={cn("relative", reversed && "lg:order-2")}>
           <div className="relative aspect-[4/5] overflow-hidden bg-paper">
             <Image
@@ -141,7 +141,10 @@ function ProductRow({
           )}
         </Reveal>
 
-        <Reveal delay={0.1} className={cn(reversed && "lg:order-1")}>
+        {/* Pinned beside the photo stack rather than vertically centred, so the
+            details stay in view for the whole of a piece's scroll instead of
+            drifting off while its second and third shots go past. */}
+        <Reveal delay={0.1} className={cn("lg:sticky lg:top-28 lg:self-start", reversed && "lg:order-1")}>
           {product.collection && (
             <p className="label-luxury text-gold">{collectionMap[product.collection]?.name}</p>
           )}

@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import { collections as seedCollections } from "@/lib/data/collections";
 import { aboutCopy as seedAbout } from "@/lib/data/about";
 import { founderStory as seedFounder } from "@/lib/data/founder";
+import { DEFAULT_NAVIGATION, type NavigationContent } from "@/lib/data/navigation";
 import type { Collection, CollectionSlug, AboutCopy, FounderStory } from "@/lib/types";
 
 export interface HeroContent {
@@ -61,7 +62,10 @@ interface ContentState {
   about: AboutCopy;
   founder: FounderStory;
   collections: Collection[];
+  navigation: NavigationContent;
   updateHero: (patch: Partial<HeroContent>) => void;
+  updateNavigation: (patch: Partial<NavigationContent>) => void;
+  resetNavigation: () => void;
   updateAbout: (patch: Partial<AboutCopy>) => void;
   updateFounder: (patch: Partial<FounderStory>) => void;
   updateCollection: (slug: CollectionSlug, patch: Partial<Collection>) => void;
@@ -75,8 +79,12 @@ export const useContentStore = create<ContentState>()(
       about: seedAbout,
       founder: seedFounder,
       collections: seedCollections,
+      navigation: DEFAULT_NAVIGATION,
 
       updateHero: (patch) => set((state) => ({ hero: { ...state.hero, ...patch } })),
+      updateNavigation: (patch) =>
+        set((state) => ({ navigation: { ...state.navigation, ...patch } })),
+      resetNavigation: () => set({ navigation: DEFAULT_NAVIGATION }),
       updateAbout: (patch) => set((state) => ({ about: { ...state.about, ...patch } })),
       updateFounder: (patch) => set((state) => ({ founder: { ...state.founder, ...patch } })),
       updateCollection: (slug, patch) =>
@@ -85,7 +93,13 @@ export const useContentStore = create<ContentState>()(
         })),
 
       resetToDefaults: () =>
-        set({ hero: DEFAULT_HERO, about: seedAbout, founder: seedFounder, collections: seedCollections }),
+        set({
+          hero: DEFAULT_HERO,
+          about: seedAbout,
+          founder: seedFounder,
+          collections: seedCollections,
+          navigation: DEFAULT_NAVIGATION,
+        }),
     }),
     { name: "mirenne-content" }
   )

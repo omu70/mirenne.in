@@ -24,16 +24,8 @@ import {
 import { useCartStore, cartItemCount } from "@/lib/store/cart-store";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
+import { useContentStore } from "@/lib/store/content-store";
 
-// Rendered either side of the "Shop" mega-menu trigger, in this exact
-// order — matches the Website Content Handoff doc's header nav spec
-// (Home, Shop, About, Contact Us). New Arrivals moved out of the top nav
-// but stays reachable via the footer and the homepage's New Arrivals rail.
-const LINKS_BEFORE_SHOP = [{ label: "Home", href: "/" }];
-const LINKS_AFTER_SHOP = [
-  { label: "About", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-];
 
 const TRANSPARENT_PREFIXES = ["/collections"];
 
@@ -48,6 +40,11 @@ export function Navbar() {
 
   const headerRef = React.useRef<HTMLElement>(null);
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // The header nav is admin-editable (see /admin/menu). Any one entry can be
+  // flagged as the mega-menu trigger, so the order and the labels either side
+  // of it are data rather than two hardcoded arrays.
+  const headerLinks = useContentStore((s) => s.navigation.headerLinks);
 
   const cartItems = useCartStore((s) => s.items);
   const openCart = useCartStore((s) => s.openCart);
@@ -210,40 +207,35 @@ export function Navbar() {
               140px at `lg` and up. Below `lg`, these destinations live in the
               MobileMenu sheet instead. */}
           <nav className="hidden items-center justify-center gap-8 lg:flex lg:h-11">
-            {LINKS_BEFORE_SHOP.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn("label-luxury link-underline transition-colors duration-500", textClass)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <button
-              onMouseEnter={openMenu}
-              onMouseLeave={scheduleClose}
-              onClick={() => setMegaOpen((v) => !v)}
-              className={cn(
-                "label-luxury flex items-center gap-1.5 transition-colors duration-500",
-                textClass
-              )}
-              aria-expanded={megaOpen}
-            >
-              Shop
-              <ChevronDown
-                className={cn("h-3 w-3 transition-transform duration-300", megaOpen && "rotate-180")}
-                strokeWidth={1.5}
-              />
-            </button>
-            {LINKS_AFTER_SHOP.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn("label-luxury link-underline transition-colors duration-500", textClass)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {headerLinks.map((link, i) =>
+              link.megaMenu ? (
+                <button
+                  key={`${link.href}-${i}`}
+                  onMouseEnter={openMenu}
+                  onMouseLeave={scheduleClose}
+                  onClick={() => setMegaOpen((v) => !v)}
+                  className={cn(
+                    "label-luxury flex cursor-pointer items-center gap-1.5 transition-colors duration-500",
+                    textClass
+                  )}
+                  aria-expanded={megaOpen}
+                >
+                  {link.label}
+                  <ChevronDown
+                    className={cn("h-3 w-3 transition-transform duration-300", megaOpen && "rotate-180")}
+                    strokeWidth={1.5}
+                  />
+                </button>
+              ) : (
+                <Link
+                  key={`${link.href}-${i}`}
+                  href={link.href}
+                  className={cn("label-luxury link-underline transition-colors duration-500", textClass)}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </nav>
         </Container>
 

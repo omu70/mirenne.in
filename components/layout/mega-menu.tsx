@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { useContentStore, collectionsToMap } from "@/lib/store/content-store";
-import { NAV_CATEGORIES } from "@/lib/data/nav-categories";
+
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -12,12 +12,13 @@ interface MegaMenuProps {
 
 export function MegaMenu({ onNavigate }: MegaMenuProps) {
   const collections = useContentStore((s) => s.collections);
+  const nav = useContentStore((s) => s.navigation);
   const featured = collectionsToMap(collections).signature;
 
   return (
     <div className="grid grid-cols-12 gap-x-10 gap-y-10">
       <div className="col-span-3">
-        <p className="label-luxury mb-6 text-gold/70">Shop By Collection</p>
+        <p className="label-luxury mb-6 text-gold/70">{nav.collectionsTitle}</p>
         <ul className="space-y-3.5">
           {collections.map((c) => (
             <li key={c.slug}>
@@ -42,9 +43,9 @@ export function MegaMenu({ onNavigate }: MegaMenuProps) {
       </div>
 
       <div className="col-span-3">
-        <p className="label-luxury mb-6 text-gold/70">Shop By Category</p>
+        <p className="label-luxury mb-6 text-gold/70">{nav.categoriesTitle}</p>
         <ul className="space-y-3.5">
-          {NAV_CATEGORIES.map((cat) => (
+          {nav.categories.map((cat) => (
             <li key={cat}>
               <Link
                 href={`/shop?category=${encodeURIComponent(cat)}`}
@@ -59,35 +60,38 @@ export function MegaMenu({ onNavigate }: MegaMenuProps) {
       </div>
 
       <div className="col-span-3">
-        <p className="label-luxury mb-6 text-gold/70">The Edit</p>
+        <p className="label-luxury mb-6 text-gold/70">{nav.editTitle}</p>
         <ul className="space-y-3.5">
-          <li>
-            <Link href="/shop?filter=new" onClick={onNavigate} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-              New Arrivals
-            </Link>
-          </li>
-          <li>
-            <Link href="/shop?filter=bestseller" onClick={onNavigate} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-              Best Sellers
-            </Link>
-          </li>
-          <li>
-            <Link href="/shop?availability=made-to-order" onClick={onNavigate} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-              Made To Order
-            </Link>
-          </li>
-          <li>
-            <Link href="/shop" onClick={onNavigate} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-              Shop All
-            </Link>
-          </li>
+          {nav.editLinks.map((link, i) => (
+            <li key={`${link.href}-${i}`}>
+              <Link
+                href={link.href}
+                onClick={onNavigate}
+                className="link-underline text-sm text-gold transition-colors hover:text-gold-dark"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
         </ul>
-        <div className="mt-9 border-t border-hairline pt-6">
-          <p className="label-luxury mb-3 text-gold/70">Need Help Choosing?</p>
-          <Link href="/contact" onClick={onNavigate} className="link-underline text-sm text-gold transition-colors hover:text-gold-dark">
-            Book a Styling Appointment
-          </Link>
-        </div>
+        {nav.helpLinks.length > 0 && (
+          <div className="mt-9 border-t border-hairline pt-6">
+            {nav.helpTitle && <p className="label-luxury mb-3 text-gold/70">{nav.helpTitle}</p>}
+            <ul className="space-y-3">
+              {nav.helpLinks.map((link, i) => (
+                <li key={`${link.href}-${i}`}>
+                  <Link
+                    href={link.href}
+                    onClick={onNavigate}
+                    className="link-underline text-sm text-gold transition-colors hover:text-gold-dark"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="col-span-3">
