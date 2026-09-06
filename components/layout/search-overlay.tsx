@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Search, X } from "lucide-react";
 import { Container } from "@/components/luxury/container";
 import { useProductStore } from "@/lib/store/product-store";
-import { formatINR, cn } from "@/lib/utils";
+import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 
 const POPULAR_SEARCHES = ["Gowns", "Sarees", "Lehenga Sets", "Evening Wear", "Cocktail Dresses"];
 
@@ -105,6 +105,7 @@ export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
                           <Image
                             src={p.images[0].src}
                             alt={p.images[0].alt}
+                            unoptimized={isUnoptimizableSrc(p.images[0].src)}
                             fill
                             sizes="(min-width: 768px) 16vw, 40vw"
                             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"

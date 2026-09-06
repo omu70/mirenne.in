@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { LuxuryBadge } from "@/components/luxury/badge";
 import { useCartStore } from "@/lib/store/cart-store";
 import { collectionMap } from "@/lib/data/collections";
-import { cn, formatINR } from "@/lib/utils";
+import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 interface QuickViewProps {
@@ -55,6 +55,7 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
             <Image
               src={product.images[0].src}
               alt={product.images[0].alt}
+              unoptimized={isUnoptimizableSrc(product.images[0].src)}
               fill
               sizes="(min-width: 640px) 50vw, 100vw"
               className="object-cover"

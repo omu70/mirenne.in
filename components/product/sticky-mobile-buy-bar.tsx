@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { cn, formatINR } from "@/lib/utils";
+import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 interface StickyMobileBuyBarProps {
@@ -62,7 +62,14 @@ export function StickyMobileBuyBar({ product }: StickyMobileBuyBarProps) {
       )}
     >
       <div className="relative h-12 w-9 shrink-0 overflow-hidden bg-paper">
-        <Image src={product.images[0].src} alt="" fill sizes="36px" className="object-cover" />
+        <Image
+          src={product.images[0].src}
+          alt=""
+          unoptimized={isUnoptimizableSrc(product.images[0].src)}
+          fill
+          sizes="36px"
+          className="object-cover"
+        />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs text-gold">{product.name}</p>

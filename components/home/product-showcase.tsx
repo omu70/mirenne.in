@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, Star } from "lucide-react";
-import { cn, formatINR } from "@/lib/utils";
+import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import { useProductStore } from "@/lib/store/product-store";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
@@ -100,6 +100,7 @@ function ProductRow({
             <Image
               src={product.images[0].src}
               alt={product.images[0].alt}
+              unoptimized={isUnoptimizableSrc(product.images[0].src)}
               fill
               priority={first}
               sizes="(min-width: 1024px) 45vw, 90vw"
@@ -129,6 +130,7 @@ function ProductRow({
                   <Image
                     src={img.src}
                     alt={img.alt}
+                    unoptimized={isUnoptimizableSrc(img.src)}
                     fill
                     sizes="(min-width: 1024px) 22vw, 45vw"
                     className="object-cover"

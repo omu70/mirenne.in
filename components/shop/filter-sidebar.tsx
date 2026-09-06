@@ -7,31 +7,37 @@ import { Slider } from "@/components/ui/slider";
 import { cn, formatINR } from "@/lib/utils";
 import {
   AVAILABILITY_OPTIONS,
-  CATEGORY_OPTIONS,
   COLLECTION_OPTIONS,
-  COLOR_OPTIONS,
-  PRICE_MAX,
-  PRICE_MIN,
-  SIZE_OPTIONS,
   getAvailabilityCounts,
   getCategoryCounts,
   getCollectionCounts,
   getColorCounts,
   getSizeCounts,
+  type ShopFacets,
   type ShopFilters,
 } from "@/lib/shop/filters";
+import type { Product } from "@/lib/types";
 
 type ListKey = "categories" | "collections" | "colors" | "sizes" | "availability";
 
 interface FilterSidebarProps {
+  /** The live catalogue — facet options and counts are derived from it. */
+  products: Product[];
+  facets: ShopFacets;
   filters: ShopFilters;
   onChange: (patch: Partial<ShopFilters>) => void;
   className?: string;
 }
 
-export function FilterSidebar({ filters, onChange, className }: FilterSidebarProps) {
-  const categoryCounts = React.useMemo(() => getCategoryCounts(filters), [filters]);
-  const collectionCounts = React.useMemo(() => getCollectionCounts(filters), [filters]);
+export function FilterSidebar({ products, facets, filters, onChange, className }: FilterSidebarProps) {
+  const categoryCounts = React.useMemo(
+    () => getCategoryCounts(products, filters, facets),
+    [products, filters, facets]
+  );
+  const collectionCounts = React.useMemo(
+    () => getCollectionCounts(products, filters),
+    [products, filters]
+  );
   // Collection is optional on a product, so a catalogue can legitimately have
   // nothing assigned to any collection. In that case every option in this
   // facet reads 0 and ticking one can only empty the grid — so the facet is
@@ -39,9 +45,18 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
   // piece is given a collection (or one is already active in the URL).
   const hasAnyCollection =
     filters.collections.length > 0 || Object.values(collectionCounts).some((n) => n > 0);
-  const colorCounts = React.useMemo(() => getColorCounts(filters), [filters]);
-  const sizeCounts = React.useMemo(() => getSizeCounts(filters), [filters]);
-  const availabilityCounts = React.useMemo(() => getAvailabilityCounts(filters), [filters]);
+  const colorCounts = React.useMemo(
+    () => getColorCounts(products, filters, facets),
+    [products, filters, facets]
+  );
+  const sizeCounts = React.useMemo(
+    () => getSizeCounts(products, filters, facets),
+    [products, filters, facets]
+  );
+  const availabilityCounts = React.useMemo(
+    () => getAvailabilityCounts(products, filters),
+    [products, filters]
+  );
 
   const toggle = (key: ListKey, value: string) => {
     const current = filters[key] as string[];
@@ -56,7 +71,7 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
           <AccordionTrigger>Category</AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col gap-3.5">
-              {CATEGORY_OPTIONS.map((cat) => (
+              {facets.categories.map((cat) => (
                 <label key={cat} className="group flex cursor-pointer items-center justify-between gap-3">
                   <span className="flex items-center gap-3">
                     <Checkbox
@@ -95,7 +110,7 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
         <AccordionItem value="price">
           <AccordionTrigger>Price</AccordionTrigger>
           <AccordionContent>
-            <PriceRangeControl filters={filters} onChange={onChange} />
+            <PriceRangeControl facets={facets} filters={filters} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
 
@@ -103,7 +118,7 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
           <AccordionTrigger>Color</AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-wrap gap-3">
-              {COLOR_OPTIONS.map((c) => {
+              {facets.colors.map((c) => {
                 const active = filters.colors.includes(c.name);
                 const count = colorCounts[c.name] ?? 0;
                 return (
@@ -131,7 +146,7 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
           <AccordionTrigger>Size</AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-wrap gap-2">
-              {SIZE_OPTIONS.map((s) => {
+              {facets.sizes.map((s) => {
                 const active = filters.sizes.includes(s);
                 const count = sizeCounts[s] ?? 0;
                 return (
@@ -188,9 +203,11 @@ export function FilterSidebar({ filters, onChange, className }: FilterSidebarPro
  * render rather than in an effect.
  */
 function PriceRangeControl({
+  facets,
   filters,
   onChange,
 }: {
+  facets: ShopFacets;
   filters: ShopFilters;
   onChange: (patch: Partial<ShopFilters>) => void;
 }) {
@@ -205,8 +222,8 @@ function PriceRangeControl({
   return (
     <div className="px-1 pt-1">
       <Slider
-        min={PRICE_MIN}
-        max={PRICE_MAX}
+        min={facets.priceMin}
+        max={facets.priceMax}
         step={500}
         value={draft}
         onValueChange={(v) => setDraft(v as [number, number])}

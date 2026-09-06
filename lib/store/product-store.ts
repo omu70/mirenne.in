@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { products as seedProducts } from "@/lib/data/products";
 import { slugify } from "@/lib/utils";
 import type { Product } from "@/lib/types";
@@ -15,6 +15,34 @@ import type { Product } from "@/lib/types";
  * the project-wide caveat: there's no backend here, so "saved" means saved
  * to this browser on this device, not to a server).
  */
+/**
+ * Local storage is capped (~5MB in most browsers) and uploaded photos are
+ * stored inline as data URLs, so a big gallery can hit the ceiling. Without
+ * this wrapper setItem throws, persist swallows it, and the admin's whole
+ * catalogue silently fails to save — including edits that had nothing to do
+ * with images. Catching it means the in-memory catalogue still works for the
+ * rest of the session and the admin is told what happened instead of losing
+ * work without a word.
+ */
+const safeLocalStorage: Storage = {
+  get length() {
+    return localStorage.length;
+  },
+  key: (i) => localStorage.key(i),
+  getItem: (k) => localStorage.getItem(k),
+  removeItem: (k) => localStorage.removeItem(k),
+  clear: () => localStorage.clear(),
+  setItem: (k, v) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("mirenne:storage-full"));
+      }
+    }
+  },
+};
+
 interface ProductState {
   products: Product[];
   addProduct: (product: Product) => void;
@@ -50,9 +78,10 @@ export const useProductStore = create<ProductState>()(
 
       resetToSeed: () => set({ products: seedProducts }),
     }),
-    { name: "mirenne-products" }
+    { name: "mirenne-products", storage: createJSONStorage(() => safeLocalStorage) }
   )
 );
+
 
 /** Slugifies a name and disambiguates against existing slugs (my-piece, my-piece-2, ...). */
 export function generateSlug(name: string, existing: Product[]): string {

@@ -14,6 +14,16 @@ export function formatINR(amount: number): string {
   }).format(amount);
 }
 
+/**
+ * True for image sources Next's optimizer cannot fetch — a data: URL from an
+ * admin upload, or a blob: URL from a local preview. Those have to be passed
+ * to <Image> with `unoptimized`, or the optimizer returns 400 and the image
+ * renders as a blank box.
+ */
+export function isUnoptimizableSrc(src: string): boolean {
+  return src.startsWith("data:") || src.startsWith("blob:");
+}
+
 export function slugify(value: string): string {
   return value
     .toLowerCase()

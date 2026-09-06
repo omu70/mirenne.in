@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { ProductImage } from "@/lib/types";
+import { isUnoptimizableSrc } from "@/lib/utils";
 
 interface ProductGalleryProps {
   images: ProductImage[];
@@ -26,6 +27,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           <Image
             src={image.src}
             alt={image.alt}
+            unoptimized={isUnoptimizableSrc(image.src)}
             fill
             priority={i === 0}
             sizes="(min-width: 1024px) 44vw, (min-width: 640px) 60vw, 82vw"

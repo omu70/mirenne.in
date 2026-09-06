@@ -9,7 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProductStore, generateSlug, generateProductId } from "@/lib/store/product-store";
 import { collections } from "@/lib/data/collections";
-import { slugify } from "@/lib/utils";
+import { isUnoptimizableSrc, slugify } from "@/lib/utils";
+import Image from "next/image";
+import { ImagePlus, X } from "lucide-react";
+import type { ProductImage } from "@/lib/types";
 import type { Availability, Product } from "@/lib/types";
 
 const AVAILABILITY_OPTIONS: { value: Availability; label: string }[] = [
@@ -27,6 +30,36 @@ const SIZE_GUIDE_OPTIONS: { value: Product["sizeGuideType"]; label: string }[] =
   { value: "saree", label: "Saree" },
   { value: "free-size", label: "Free Size" },
 ];
+
+// Uploaded photos live inside the product record as data URLs, which are then
+// held in this browser's local storage — so they are downscaled hard on the way
+// in. 1400px on the long edge at q0.75 lands around 150-250KB per photo, which
+// keeps a full gallery inside the ~5MB local-storage ceiling. Raising either
+// number buys very little visible quality and fills that budget fast.
+const MAX_UPLOAD_EDGE = 1400;
+const UPLOAD_QUALITY = 0.75;
+
+async function downscaleToDataUrl(file: File, alt: string): Promise<ProductImage> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_UPLOAD_EDGE / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable");
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+
+  return { src: canvas.toDataURL("image/jpeg", UPLOAD_QUALITY), alt, width, height };
+}
+
+/** Rough decoded size of a base64 data URL, for the storage readout. */
+function dataUrlBytes(src: string): number {
+  return Math.round((src.length - src.indexOf(",") - 1) * 0.75);
+}
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -78,11 +111,21 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
   // "src | alt | WIDTHxHEIGHT" per line. Alt and dimensions are optional on
   // input but round-trip through an edit, so opening a product and saving it
   // no longer flattens hand-written alt text or real image dimensions.
+  // Uploaded photos are held separately in `uploaded` rather than pasted in
+  // here — a data URL is tens of thousands of characters and would make the
+  // textarea unreadable and unusable for the paths alongside it.
   const [imagesText, setImagesText] = React.useState(
     product
-      ? product.images.map((i) => `${i.src} | ${i.alt} | ${i.width}x${i.height}`).join("\n")
+      ? product.images
+          .filter((i) => !isUnoptimizableSrc(i.src))
+          .map((i) => `${i.src} | ${i.alt} | ${i.width}x${i.height}`)
+          .join("\n")
       : "/images/products/"
   );
+  const [uploaded, setUploaded] = React.useState<ProductImage[]>(
+    product ? product.images.filter((i) => isUnoptimizableSrc(i.src)) : []
+  );
+  const [uploading, setUploading] = React.useState(false);
   const [isNew, setIsNew] = React.useState(product?.isNew ?? true);
   const [isBestSeller, setIsBestSeller] = React.useState(product?.isBestSeller ?? false);
   const [rating, setRating] = React.useState(String(product?.rating ?? "5"));
@@ -100,6 +143,25 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
     setPrevName(name);
     if (!slugTouched) setSlug(slugify(name));
   }
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    const added: ProductImage[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        added.push(await downscaleToDataUrl(file, `${name.trim() || "Product"} photo`));
+      } catch {
+        toast.error(`Couldn't read ${file.name}.`);
+      }
+    }
+    setUploaded((current) => [...current, ...added]);
+    setUploading(false);
+    if (added.length) toast.success(`${added.length} photo${added.length === 1 ? "" : "s"} added.`);
+  };
+
+  const uploadedKb = Math.round(uploaded.reduce((n, i) => n + dataUrlBytes(i.src), 0) / 1024);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +189,7 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const images = imagesText
+    const pathImages = imagesText
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
@@ -141,6 +203,8 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
           height: Number.isFinite(h) && h > 0 ? h : 2000,
         };
       });
+
+    const images = [...pathImages, ...uploaded];
 
     const details = detailsText
       .split("\n")
@@ -337,9 +401,59 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
 
         <Field
           label="Images"
-          hint="One per line: path | alt text | WIDTHxHEIGHT. Alt text and dimensions are optional — they default to the product name and 1600x2000."
+          hint="One per line: path | alt text | WIDTHxHEIGHT — a path under /public or a URL from an allowed host (see next.config.ts). Alt text and dimensions are optional. Uploaded photos are listed below and are appended after these."
         >
           <Textarea value={imagesText} onChange={(e) => setImagesText(e.target.value)} rows={5} />
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="inline-flex cursor-pointer items-center gap-2 border border-hairline-dark px-4 py-2 text-xs text-ink transition-colors hover:border-ink">
+              <ImagePlus className="h-4 w-4" strokeWidth={1.25} />
+              {uploading ? "Processing…" : "Upload photos"}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                onChange={(e) => {
+                  void handleFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {uploaded.length > 0 && (
+              <span className="text-xs text-graphite">
+                {uploaded.length} uploaded · ~{uploadedKb} KB of roughly 5,000 KB of browser storage
+              </span>
+            )}
+          </div>
+
+          {uploaded.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {uploaded.map((img, i) => (
+                <div key={img.src.slice(-24) + i}>
+                  <div className="relative aspect-[4/5] overflow-hidden bg-paper">
+                    <Image src={img.src} alt={img.alt} unoptimized fill sizes="120px" className="object-cover" />
+                    <button
+                      type="button"
+                      aria-label={`Remove ${img.alt}`}
+                      onClick={() => setUploaded((c) => c.filter((_, n) => n !== i))}
+                      className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center bg-ivory/90 text-ink transition-colors hover:bg-ivory"
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                  <Input
+                    value={img.alt}
+                    aria-label="Alt text"
+                    onChange={(e) =>
+                      setUploaded((c) => c.map((v, n) => (n === i ? { ...v, alt: e.target.value } : v)))
+                    }
+                    className="mt-1 h-8 px-2 text-[11px]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </Field>
 
         <Field label="Tags" hint="Comma-separated, used by search and filters.">

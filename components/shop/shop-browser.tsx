@@ -4,9 +4,9 @@ import * as React from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useProductStore } from "@/lib/store/product-store";
 import {
-  DEFAULT_FILTERS,
   filterProducts,
   filtersToSearchParams,
+  getShopFacets,
   parseFiltersFromSearchParams,
   sortProducts,
   type ShopFilters,
@@ -21,6 +21,11 @@ export function ShopBrowser() {
   const searchParams = useSearchParams();
   const products = useProductStore((s) => s.products);
 
+  // Facet options and the price slider's bounds come from the live catalogue,
+  // not the static seed — otherwise a piece added in /admin/products outside
+  // the seed's price range is filtered off this page and never appears.
+  const facets = React.useMemo(() => getShopFacets(products), [products]);
+
   // Local state is the source of truth for rendering, so every filter click
   // is instant. `next/navigation`'s router.replace() is deliberately NOT used
   // here — on this all-client, no-backend page it still round-trips through
@@ -28,7 +33,30 @@ export function ShopBrowser() {
   // search-param-only change), which is unacceptable latency for a checkbox
   // click. Instead we write the URL directly via the History API (for
   // shareable/bookmarkable links) and keep React state in sync ourselves.
-  const [filters, setFilters] = React.useState<ShopFilters>(() => parseFiltersFromSearchParams(searchParams));
+  const [filters, setFilters] = React.useState<ShopFilters>(() =>
+    parseFiltersFromSearchParams(searchParams, facets)
+  );
+
+  // The store hydrates from local storage after mount, so the catalogue (and
+  // with it the price bounds) can widen on the second render. Follow that
+  // during render rather than in an effect: if the price filter was still at
+  // the old full range it stays at the new full range, and otherwise it is
+  // clamped into it — either way a newly added piece can't end up hidden
+  // behind a stale ceiling the shopper never chose.
+  const [prevBounds, setPrevBounds] = React.useState<[number, number]>([facets.priceMin, facets.priceMax]);
+  if (facets.priceMin !== prevBounds[0] || facets.priceMax !== prevBounds[1]) {
+    const wasFullRange = filters.priceMin === prevBounds[0] && filters.priceMax === prevBounds[1];
+    setPrevBounds([facets.priceMin, facets.priceMax]);
+    setFilters((f) =>
+      wasFullRange
+        ? { ...f, priceMin: facets.priceMin, priceMax: facets.priceMax }
+        : {
+            ...f,
+            priceMin: Math.max(facets.priceMin, Math.min(f.priceMin, facets.priceMax)),
+            priceMax: Math.min(facets.priceMax, Math.max(f.priceMax, facets.priceMin)),
+          }
+    );
+  }
 
   // Re-derive from the URL when it changes for a reason OTHER than our own
   // history.replaceState calls below — i.e. a <Link> elsewhere in the site
@@ -41,7 +69,7 @@ export function ShopBrowser() {
   const [prevSearchParamsString, setPrevSearchParamsString] = React.useState(searchParamsString);
   if (searchParamsString !== prevSearchParamsString) {
     setPrevSearchParamsString(searchParamsString);
-    setFilters(parseFiltersFromSearchParams(searchParams));
+    setFilters(parseFiltersFromSearchParams(searchParams, facets));
   }
 
   const filtered = React.useMemo(
@@ -61,12 +89,12 @@ export function ShopBrowser() {
   // to the history change synchronously and tries to update its own state
   // mid-way through committing ShopBrowser's update.
   React.useEffect(() => {
-    const qs = filtersToSearchParams(filters).toString();
+    const qs = filtersToSearchParams(filters, facets).toString();
     const url = qs ? `${pathname}?${qs}` : pathname;
     if (window.location.pathname + window.location.search !== url) {
       window.history.replaceState(null, "", url);
     }
-  }, [filters, pathname]);
+  }, [filters, facets, pathname]);
 
   const updateFilters = React.useCallback((patch: Partial<ShopFilters>) => {
     setFilters((current) => ({ ...current, ...patch }));
@@ -79,16 +107,17 @@ export function ShopBrowser() {
       colors: [],
       sizes: [],
       availability: [],
-      priceMin: DEFAULT_FILTERS.priceMin,
-      priceMax: DEFAULT_FILTERS.priceMax,
+      priceMin: facets.priceMin,
+      priceMax: facets.priceMax,
       quickFilter: null,
       q: "",
     });
-  }, [updateFilters]);
+  }, [updateFilters, facets]);
 
   return (
     <div>
       <ShopToolbar
+        facets={facets}
         filters={filters}
         resultCount={filtered.length}
         onChange={updateFilters}
@@ -100,7 +129,7 @@ export function ShopBrowser() {
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_1fr] lg:gap-12 xl:grid-cols-[280px_1fr]">
         <aside className="hidden lg:block">
-          <FilterSidebar filters={filters} onChange={updateFilters} />
+          <FilterSidebar products={products} facets={facets} filters={filters} onChange={updateFilters} />
         </aside>
 
         <ProductGrid products={filtered} density={density} onClearAll={clearAll} />
@@ -109,6 +138,8 @@ export function ShopBrowser() {
       <MobileFilterSheet
         open={mobileFiltersOpen}
         onOpenChange={setMobileFiltersOpen}
+        products={products}
+        facets={facets}
         filters={filters}
         onChange={updateFilters}
         onClearAll={clearAll}

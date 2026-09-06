@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useProductStore } from "@/lib/store/product-store";
 import { collectionsToMap, useContentStore } from "@/lib/store/content-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
-import { formatINR } from "@/lib/utils";
+import { formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export default function AdminProductsPage() {
@@ -122,7 +122,14 @@ export default function AdminProductsPage() {
                     <div className="flex items-center gap-3">
                       <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-paper">
                         {p.images[0] && (
-                          <Image src={p.images[0].src} alt="" fill sizes="40px" className="object-cover" />
+                          <Image
+                            src={p.images[0].src}
+                            alt=""
+                            unoptimized={isUnoptimizableSrc(p.images[0].src)}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
                         )}
                       </div>
                       <div className="min-w-0">

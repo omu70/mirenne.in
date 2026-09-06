@@ -6,13 +6,13 @@ import { cn, formatINR } from "@/lib/utils";
 import {
   AVAILABILITY_OPTIONS,
   COLLECTION_OPTIONS,
-  PRICE_MAX,
-  PRICE_MIN,
   SORT_OPTIONS,
+  type ShopFacets,
   type ShopFilters,
 } from "@/lib/shop/filters";
 
 interface ShopToolbarProps {
+  facets: ShopFacets;
   filters: ShopFilters;
   resultCount: number;
   onChange: (patch: Partial<ShopFilters>) => void;
@@ -29,6 +29,7 @@ interface Chip {
 }
 
 export function ShopToolbar({
+  facets,
   filters,
   resultCount,
   onChange,
@@ -76,11 +77,11 @@ export function ShopToolbar({
       onRemove: () => onChange({ availability: filters.availability.filter((v) => v !== a) }),
     });
   });
-  if (filters.priceMin !== PRICE_MIN || filters.priceMax !== PRICE_MAX) {
+  if (filters.priceMin !== facets.priceMin || filters.priceMax !== facets.priceMax) {
     chips.push({
       key: "price",
       label: `${formatINR(filters.priceMin)} – ${formatINR(filters.priceMax)}`,
-      onRemove: () => onChange({ priceMin: PRICE_MIN, priceMax: PRICE_MAX }),
+      onRemove: () => onChange({ priceMin: facets.priceMin, priceMax: facets.priceMax }),
     });
   }
   if (filters.quickFilter) {

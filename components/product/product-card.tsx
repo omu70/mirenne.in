@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import { cn, formatINR } from "@/lib/utils";
+import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import { LuxuryBadge } from "@/components/luxury/badge";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
@@ -35,6 +35,7 @@ export function ProductCard({ product, priority, sizes }: ProductCardProps) {
             <Image
               src={primaryImage.src}
               alt={primaryImage.alt}
+              unoptimized={isUnoptimizableSrc(primaryImage.src)}
               fill
               priority={priority}
               sizes={sizes ?? "(min-width: 1024px) 23vw, (min-width: 640px) 45vw, 90vw"}
@@ -43,6 +44,7 @@ export function ProductCard({ product, priority, sizes }: ProductCardProps) {
             <Image
               src={secondaryImage.src}
               alt={secondaryImage.alt}
+              unoptimized={isUnoptimizableSrc(secondaryImage.src)}
               fill
               sizes={sizes ?? "(min-width: 1024px) 23vw, (min-width: 640px) 45vw, 90vw"}
               className="absolute inset-0 object-cover opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100"

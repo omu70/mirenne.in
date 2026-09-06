@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,6 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { useAdminAuthStore } from "@/lib/store/admin-auth-store";
@@ -28,6 +30,20 @@ const NAV_ITEMS = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  // The product store can't write to local storage once it's full (uploaded
+  // photos are stored inline as data URLs). It reports that here rather than
+  // failing silently, because the symptom otherwise is an admin's whole
+  // session of edits disappearing on the next reload with no explanation.
+  React.useEffect(() => {
+    const onFull = () =>
+      toast.error("Browser storage is full — this change wasn't saved.", {
+        description: "Remove some uploaded photos, or point products at image paths or URLs instead.",
+        duration: 10000,
+      });
+    window.addEventListener("mirenne:storage-full", onFull);
+    return () => window.removeEventListener("mirenne:storage-full", onFull);
+  }, []);
   const lock = useAdminAuthStore((s) => s.lock);
 
   return (

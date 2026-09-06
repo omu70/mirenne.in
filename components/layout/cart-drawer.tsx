@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/input";
 import { cartItemCount, cartSubtotal, promoDiscountRate, useCartStore } from "@/lib/store/cart-store";
 import { useProductStore } from "@/lib/store/product-store";
-import { formatINR } from "@/lib/utils";
+import { formatINR, isUnoptimizableSrc } from "@/lib/utils";
 
 const FREE_SHIPPING_THRESHOLD = 15000;
 const STANDARD_SHIPPING = 350;
@@ -81,7 +81,14 @@ export function CartDrawer() {
                       onClick={closeCart}
                       className="relative h-28 w-20 shrink-0 overflow-hidden bg-paper"
                     >
-                      <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        unoptimized={isUnoptimizableSrc(item.image)}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
                     </Link>
                     <div className="flex flex-1 flex-col justify-between">
                       <div className="flex justify-between gap-2">
@@ -147,6 +154,7 @@ export function CartDrawer() {
                           <Image
                             src={p.images[0].src}
                             alt={p.images[0].alt}
+                            unoptimized={isUnoptimizableSrc(p.images[0].src)}
                             fill
                             sizes="120px"
                             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
