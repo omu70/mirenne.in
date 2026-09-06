@@ -10,12 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/input";
-import { cartItemCount, cartSubtotal, promoDiscountRate, useCartStore } from "@/lib/store/cart-store";
+import { cartItemCount, cartSubtotal, useCartStore } from "@/lib/store/cart-store";
+import { FREE_SHIPPING_THRESHOLD, computeTotals, promoDiscountRate } from "@/lib/checkout/pricing";
 import { useProductStore } from "@/lib/store/product-store";
 import { formatINR, isUnoptimizableSrc } from "@/lib/utils";
-
-const FREE_SHIPPING_THRESHOLD = 15000;
-const STANDARD_SHIPPING = 350;
 
 export function CartDrawer() {
   const items = useCartStore((s) => s.items);
@@ -35,9 +33,9 @@ export function CartDrawer() {
 
   const subtotal = cartSubtotal(items);
   const discountRate = promoDiscountRate(promoCode);
-  const discount = Math.round(subtotal * discountRate);
-  const shippingEstimate = subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
-  const total = subtotal - discount + shippingEstimate;
+  // Same helper the checkout page and the payment route use, so what's shown
+  // here can't drift from what gets charged.
+  const { discount, shipping: shippingEstimate, total } = computeTotals(subtotal, promoCode);
 
   const recommended = products.filter((p) => p.isBestSeller && !items.some((i) => i.productId === p.id)).slice(0, 3);
 

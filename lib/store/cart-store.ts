@@ -105,12 +105,6 @@ export function cartItemCount(items: CartItem[]): number {
   return items.reduce((sum, i) => sum + i.quantity, 0);
 }
 
-const PROMO_CODES: Record<string, number> = {
-  MIRENNE10: 0.1,
-  WELCOME15: 0.15,
-};
-
-export function promoDiscountRate(code: string | null): number {
-  if (!code) return 0;
-  return PROMO_CODES[code.toUpperCase()] ?? 0;
-}
+// Promo rates and shipping rules live in lib/checkout/pricing.ts — a plain
+// module the server routes can import too. This one is "use client".
+export { promoDiscountRate } from "@/lib/checkout/pricing";
