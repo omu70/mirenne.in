@@ -3,14 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { Container } from "@/components/luxury/container";
-import { LUXURY_EASE } from "@/components/luxury/reveal";
-import { MegaMenu } from "@/components/layout/mega-menu";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { SearchOverlay } from "@/components/layout/search-overlay";
 import {
@@ -34,12 +31,10 @@ export function Navbar() {
   const mounted = useMounted();
 
   const [scrolled, setScrolled] = React.useState(false);
-  const [megaOpen, setMegaOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
 
   const headerRef = React.useRef<HTMLElement>(null);
-  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // The header nav is admin-editable (see /admin/menu). Any one entry can be
   // flagged as the mega-menu trigger, so the order and the labels either side
@@ -54,7 +49,7 @@ export function Navbar() {
   const isTransparentCapable =
     pathname === "/" || TRANSPARENT_PREFIXES.some((p) => pathname.startsWith(p));
 
-  const showSolid = scrolled || !isTransparentCapable || mobileMenuOpen || searchOpen || megaOpen;
+  const showSolid = scrolled || !isTransparentCapable || mobileMenuOpen || searchOpen;
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 32);
@@ -72,36 +67,10 @@ export function Navbar() {
   const [prevPathname, setPrevPathname] = React.useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
-    setMegaOpen(false);
     setMobileMenuOpen(false);
     setSearchOpen(false);
   }
 
-  React.useEffect(() => {
-    if (!megaOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMegaOpen(false);
-    };
-    const onClick = (e: MouseEvent) => {
-      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
-        setMegaOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("mousedown", onClick);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("mousedown", onClick);
-    };
-  }, [megaOpen]);
-
-  const openMenu = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setMegaOpen(true);
-  };
-  const scheduleClose = () => {
-    closeTimer.current = setTimeout(() => setMegaOpen(false), 150);
-  };
 
   const textClass = showSolid ? "text-gold" : "text-ivory";
 
@@ -207,55 +176,17 @@ export function Navbar() {
               140px at `lg` and up. Below `lg`, these destinations live in the
               MobileMenu sheet instead. */}
           <nav className="hidden items-center justify-center gap-8 lg:flex lg:h-11">
-            {headerLinks.map((link, i) =>
-              link.megaMenu ? (
-                <button
-                  key={`${link.href}-${i}`}
-                  onMouseEnter={openMenu}
-                  onMouseLeave={scheduleClose}
-                  onClick={() => setMegaOpen((v) => !v)}
-                  className={cn(
-                    "label-luxury flex cursor-pointer items-center gap-1.5 transition-colors duration-500",
-                    textClass
-                  )}
-                  aria-expanded={megaOpen}
-                >
-                  {link.label}
-                  <ChevronDown
-                    className={cn("h-3 w-3 transition-transform duration-300", megaOpen && "rotate-180")}
-                    strokeWidth={1.5}
-                  />
-                </button>
-              ) : (
-                <Link
-                  key={`${link.href}-${i}`}
-                  href={link.href}
-                  className={cn("label-luxury link-underline transition-colors duration-500", textClass)}
-                >
-                  {link.label}
-                </Link>
-              )
-            )}
+            {headerLinks.map((link, i) => (
+              <Link
+                key={`${link.href}-${i}`}
+                href={link.href}
+                className={cn("label-luxury link-underline transition-colors duration-500", textClass)}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </Container>
-
-        <AnimatePresence>
-          {megaOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: LUXURY_EASE }}
-              onMouseEnter={openMenu}
-              onMouseLeave={scheduleClose}
-              className="absolute left-0 right-0 top-full border-b border-hairline bg-ivory shadow-[0_30px_60px_-25px_rgba(17,17,17,0.25)]"
-            >
-              <Container className="py-14">
-                <MegaMenu onNavigate={() => setMegaOpen(false)} />
-              </Container>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       <MobileMenu
