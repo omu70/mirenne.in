@@ -304,7 +304,7 @@ export function BuyBox({ product }: BuyBoxProps) {
         </AccordionItem>
       </Accordion>
 
-      <SizeGuideDialog product={product} open={sizeGuideOpen} onOpenChange={setSizeGuideOpen} />
+      <SizeGuideDialog open={sizeGuideOpen} onOpenChange={setSizeGuideOpen} />
     </div>
   );
 }

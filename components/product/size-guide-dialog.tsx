@@ -1,84 +1,113 @@
 "use client";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import type { Product } from "@/lib/types";
+import {
+  HOW_TO_MEASURE,
+  SIZE_GUIDE_SIGN_OFF,
+  SIZE_NOTES,
+  SIZE_TABLES,
+  type SizeTable,
+} from "@/lib/data/size-guide";
 
-const STANDARD_CHART: { size: string; bust: string; waist: string; hip: string }[] = [
-  { size: "XS", bust: "32", waist: "25", hip: "35" },
-  { size: "S", bust: "34", waist: "27", hip: "37" },
-  { size: "M", bust: "36", waist: "29", hip: "39" },
-  { size: "L", bust: "38", waist: "31", hip: "41" },
-  { size: "XL", bust: "40", waist: "33", hip: "43" },
-];
-
-interface SizeGuideDialogProps {
-  product: Product;
+/**
+ * The house size guide, shown the same way on every piece.
+ *
+ * It used to branch on `product.sizeGuideType` and show one of three different
+ * things, two of which were written from nothing — the saree variant described
+ * an unstitched six-metre drape, which is not what any of these pieces are.
+ * There is one guide, it covers tops and bottoms, and it applies to the whole
+ * catalogue, so there is nothing left to branch on.
+ *
+ * Note the range: the guide runs XXS to XL, while products are currently sold
+ * XS to XL. Anyone measuring XXS will find their size in the chart and no way
+ * to order it — add XXS to a product's sizes in /admin/products if the pieces
+ * are actually cut that small.
+ */
+export function SizeGuideDialog({
+  open,
+  onOpenChange,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-export function SizeGuideDialog({ product, open, onOpenChange }: SizeGuideDialogProps) {
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-8 md:p-10">
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto p-8 md:p-10">
         <DialogTitle>Size Guide</DialogTitle>
 
-        {product.sizeGuideType === "standard" && (
-          <div className="mt-6">
-            <p className="text-sm leading-relaxed text-gold">
-              Measurements in inches, taken against the body. If you fall between two sizes, we
-              recommend sizing up for a more comfortable drape.
-            </p>
-            <table className="mt-6 w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-hairline-dark">
-                  <th className="label-luxury py-3 text-left font-normal text-gold">Size</th>
-                  <th className="label-luxury py-3 text-right font-normal text-gold">Bust</th>
-                  <th className="label-luxury py-3 text-right font-normal text-gold">Waist</th>
-                  <th className="label-luxury py-3 text-right font-normal text-gold">Hip</th>
-                </tr>
-              </thead>
-              <tbody>
-                {STANDARD_CHART.map((row) => (
-                  <tr key={row.size} className="border-b border-hairline">
-                    <td className="py-3 text-gold">{row.size}</td>
-                    <td className="py-3 text-right text-gold">{row.bust}&Prime;</td>
-                    <td className="py-3 text-right text-gold">{row.waist}&Prime;</td>
-                    <td className="py-3 text-right text-gold">{row.hip}&Prime;</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <p className="mt-2 text-sm text-gold">All measurements are in inches.</p>
 
-        {product.sizeGuideType === "saree" && (
-          <div className="mt-6 space-y-4 text-sm leading-relaxed text-gold">
-            <p>
-              This saree is 6.3 metres in length and comes with an unstitched blouse piece,
-              draping to fit most body types without alteration.
-            </p>
-            <p>
-              For a tailored blouse, we recommend sharing your bust, waist, and blouse-length
-              measurements with our styling team by email after your order — we are glad to
-              recommend a trusted tailor or advise on fit before you cut the fabric.
-            </p>
-          </div>
-        )}
+        <div className="mt-8 space-y-8">
+          {SIZE_TABLES.map((table) => (
+            <ChartTable key={table.title} table={table} />
+          ))}
+        </div>
 
-        {product.sizeGuideType === "free-size" && (
-          <div className="mt-6 space-y-4 text-sm leading-relaxed text-gold">
-            <p>
-              This piece is designed with a relaxed, flowing silhouette that comfortably fits
-              bust sizes 34&Prime;–40&Prime; without needing an exact size match.
-            </p>
-            <p>
-              If you prefer a closer fit or fall outside this range, our styling team can advise
-              on minor alterations before your order ships.
-            </p>
-          </div>
-        )}
+        <section className="mt-10 border-t border-hairline pt-8">
+          <h3 className="label-luxury text-gold">How To Measure</h3>
+          <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+            {HOW_TO_MEASURE.map((m) => (
+              <div key={m.label}>
+                <dt className="text-sm text-gold-dark">{m.label}</dt>
+                <dd className="mt-0.5 text-sm leading-relaxed text-gold">{m.instruction}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="mt-8 border-t border-hairline pt-8">
+          <dl className="space-y-4">
+            {SIZE_NOTES.map((n) => (
+              <div key={n.label}>
+                <dt className="text-sm text-gold-dark">{n.label}</dt>
+                <dd className="mt-0.5 text-sm leading-relaxed text-gold">{n.body}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <p className="label-luxury mt-10 text-center text-gold/70">{SIZE_GUIDE_SIGN_OFF}</p>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ChartTable({ table }: { table: SizeTable }) {
+  return (
+    <div>
+      <h3 className="label-luxury mb-4 text-gold">{table.title}</h3>
+      {/* Its own scroll container so a four-column chart never makes the
+          dialog itself scroll sideways on a phone. */}
+      <div className="-mx-1 overflow-x-auto px-1">
+        <table className="w-full min-w-[22rem] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-hairline-dark">
+              <th scope="col" className="label-luxury py-3 pr-4 text-left font-normal text-gold">
+                Size
+              </th>
+              {table.columns.map((c) => (
+                <th key={c} scope="col" className="label-luxury py-3 pl-4 text-right font-normal text-gold">
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.map((row) => (
+              <tr key={row.size} className="border-b border-hairline last:border-b-0">
+                <th scope="row" className="py-3 pr-4 text-left font-normal text-gold">
+                  {row.size}
+                </th>
+                {row.values.map((v, i) => (
+                  <td key={table.columns[i]} className="py-3 pl-4 text-right text-gold">
+                    {v}&Prime;
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
