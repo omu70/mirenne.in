@@ -11,6 +11,7 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { collectionMap } from "@/lib/data/collections";
 import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
 import type { Product } from "@/lib/types";
+import { track } from "@/lib/analytics/events";
 
 interface QuickViewProps {
   product: Product;
@@ -41,6 +42,14 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
       image: product.images[0].src,
       color,
       size,
+    });
+    track.addToCart({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      category: product.category,
     });
     toast.success(`${product.name} added to your bag.`);
     onOpenChange(false);

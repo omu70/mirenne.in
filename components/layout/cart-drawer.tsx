@@ -219,6 +219,25 @@ export function CartDrawer() {
                 <span className="text-gold">Shipping</span>
                 <span className="text-gold">{shippingEstimate === 0 ? "Complimentary" : formatINR(shippingEstimate)}</span>
               </div>
+
+              {/* How far off free shipping the basket is, as a bar rather than a
+                  sentence at the bottom of the drawer. Every piece is priced
+                  below the threshold, so a single-item basket is always short
+                  of it and always paying delivery — a shopper who can see the
+                  gap can close it, and one who can't, doesn't. */}
+              {shippingEstimate > 0 && (
+                <div className="mb-4">
+                  <div className="h-0.5 w-full bg-hairline-dark/40">
+                    <div
+                      className="h-0.5 bg-ink transition-[width] duration-500 ease-out"
+                      style={{ width: `${Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100))}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-gold">
+                    {formatINR(FREE_SHIPPING_THRESHOLD - subtotal)} away from complimentary shipping
+                  </p>
+                </div>
+              )}
               <div className="mb-6 flex justify-between border-t border-hairline pt-4 text-base">
                 <span className="text-gold">Estimated Total</span>
                 <span className="font-serif text-lg text-gold">{formatINR(total)}</span>
@@ -228,9 +247,11 @@ export function CartDrawer() {
                   Proceed to Checkout
                 </Link>
               </Button>
-              <p className="mt-3 text-center text-[11px] text-gold">
-                Complimentary shipping on orders above {formatINR(FREE_SHIPPING_THRESHOLD)}
-              </p>
+              {shippingEstimate === 0 && (
+                <p className="mt-3 text-center text-[11px] text-gold">
+                  Complimentary shipping applied
+                </p>
+              )}
             </div>
           </>
         )}

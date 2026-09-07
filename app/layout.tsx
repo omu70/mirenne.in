@@ -2,7 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./fonts";
 import "./globals.css";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mirenne.in";
+
 export const metadata: Metadata = {
+  // Without metadataBase every og:image resolves to a relative path, which
+  // WhatsApp, Instagram and Meta's ad previews all silently ignore.
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Mirenne — Modern Indian Luxury Fashion House",
     template: "%s | Mirenne",
@@ -17,6 +22,26 @@ export const metadata: Metadata = {
     "luxury eveningwear",
     "bridal guest outfits",
   ],
+  // Paid traffic and word-of-mouth both arrive as pasted links. With no
+  // OpenGraph tags those links previewed as a bare URL — no image, no title —
+  // which costs click-through on every share and every ad.
+  openGraph: {
+    type: "website",
+    siteName: "Mirenne",
+    locale: "en_IN",
+    url: SITE_URL,
+    title: "Mirenne — Modern Indian Luxury Fashion House",
+    description:
+      "Hand-finished modern Indian womenswear, made in India — for women who'd rather be remembered than seen.",
+    images: [{ url: "/images/banner/banner-desktop.jpg", width: 1200, height: 630, alt: "Mirenne" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mirenne — Modern Indian Luxury Fashion House",
+    description: "Hand-finished modern Indian womenswear, made in India.",
+    images: ["/images/banner/banner-desktop.jpg"],
+  },
+  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import { notFound } from "next/navigation";
 import { Container } from "@/components/luxury/container";
 import { Breadcrumb } from "@/components/luxury/breadcrumb";
@@ -15,6 +17,7 @@ import { useProductStore } from "@/lib/store/product-store";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { collectionMap } from "@/lib/data/collections";
 import { collectionHref } from "@/lib/collections/href";
+import { track } from "@/lib/analytics/events";
 
 interface ProductPageClientProps {
   slug: string;
@@ -31,6 +34,24 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
   const mounted = useMounted();
   const products = useProductStore((s) => s.products);
 
+  // Reported from the client because the catalogue this page renders lives in
+  // the browser store. Keyed on the slug so switching between products in the
+  // same session reports each one, and a re-render reports none of them twice.
+  const viewed = React.useRef<string | null>(null);
+  const product = products.find((p) => p.slug === slug);
+  React.useEffect(() => {
+    if (!product || viewed.current === product.slug) return;
+    viewed.current = product.slug;
+    track.viewItem({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      category: product.category,
+    });
+  }, [product]);
+
   if (!mounted) {
     return (
       <Container className="py-10 md:py-14">
@@ -46,8 +67,6 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
       </Container>
     );
   }
-
-  const product = products.find((p) => p.slug === slug);
 
   if (!product) {
     notFound();

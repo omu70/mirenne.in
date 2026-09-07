@@ -15,6 +15,7 @@ import { collectionMap } from "@/lib/data/collections";
 import { cn, formatINR } from "@/lib/utils";
 import { collectionHref } from "@/lib/collections/href";
 import type { Product } from "@/lib/types";
+import { track } from "@/lib/analytics/events";
 
 const AVAILABILITY_LABEL: Record<Product["availability"], string> = {
   "in-stock": "In Stock",
@@ -55,6 +56,14 @@ export function BuyBox({ product }: BuyBoxProps) {
       },
       quantity
     );
+    track.addToCart({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      quantity,
+      category: product.category,
+    });
     toast.success(`${product.name} added to your bag.`, {
       description: `${color} · ${size} · Qty ${quantity}`,
     });
@@ -207,7 +216,19 @@ export function BuyBox({ product }: BuyBoxProps) {
           Add To Bag
         </Button>
         <button
-          onClick={() => toggleWishlist(product.id)}
+          onClick={() => {
+            if (!isWishlisted) {
+              track.addToWishlist({
+                id: product.id,
+                slug: product.slug,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                category: product.category,
+              });
+            }
+            toggleWishlist(product.id);
+          }}
           aria-label={mounted && isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           className="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center border border-ink text-gold transition-colors hover:bg-ink hover:text-ivory"
         >

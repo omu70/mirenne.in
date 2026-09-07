@@ -18,6 +18,7 @@ import { useOrderStore, type Order } from "@/lib/store/order-store";
 import { computeTotals } from "@/lib/checkout/pricing";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
+import { track } from "@/lib/analytics/events";
 
 const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
 
@@ -154,6 +155,19 @@ export function CheckoutClient() {
   }, [pincode, pincodeValid]);
 
   const pin = pinResult?.code === pincode ? pinResult : null;
+
+  // begin_checkout / InitiateCheckout — the step Meta and GA4 both need to
+  // measure the drop-off between "reached checkout" and "paid". Fired once,
+  // after the cart store has hydrated and there is actually something in it.
+  const reportedCheckout = React.useRef(false);
+  React.useEffect(() => {
+    if (reportedCheckout.current || items.length === 0) return;
+    reportedCheckout.current = true;
+    track.beginCheckout(
+      items.map((i) => ({ id: i.productId, slug: i.slug, name: i.name, price: i.price, quantity: i.quantity })),
+      computeTotals(cartSubtotal(items), promoCode).total
+    );
+  }, [items, promoCode]);
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -312,6 +326,15 @@ export function CheckoutClient() {
               return;
             }
             recordOrder(data.receipt, data.totals, response.razorpay_payment_id);
+            // Only after verification — reporting a Purchase off the browser's
+            // unverified success callback would feed Meta and GA4 revenue that
+            // never actually cleared.
+            track.purchase(
+              data.receipt,
+              items.map((i) => ({ id: i.productId, slug: i.slug, name: i.name, price: i.price, quantity: i.quantity })),
+              data.totals.total,
+              data.totals.shipping
+            );
             clearCart();
             router.push(`/checkout/success?order=${encodeURIComponent(data.receipt)}`);
           } catch {
