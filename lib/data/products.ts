@@ -19,7 +19,7 @@ export const products: Product[] = [
     "slug": "ivory-grace",
     "name": "Ivory Grace",
     "category": "Saree Set",
-    "price": 9999,
+    "price": 11399,
     "shortDescription": "Pearl and sequin embroidered blouse with a ready-to-wear saree and open pallu.",
     "description": "An ivory blouse with a sweetheart neckline and an open criss-cross back, embroidered with pearls, beads and sequins in a floral vine pattern, finished with a waist cutout, paired with a ready-to-wear saree featuring an open pallu for timeless elegance.",
     "details": [
@@ -99,7 +99,7 @@ export const products: Product[] = [
     "slug": "champagne-shimmer",
     "name": "Champagne Shimmer",
     "category": "Saree Set",
-    "price": 9999,
+    "price": 11999,
     "shortDescription": "Sequin-striped blouse with a foil-finish Milano saree and pleated front.",
     "description": "A champagne blouse with a wide, straight neckline, embroidered with sequins and beads in a striped pattern, finished with a waist cutout, paired with a Milano fabric saree in a refined foil finish with a pleated front for a soft, glowing drape.",
     "details": [
@@ -178,7 +178,7 @@ export const products: Product[] = [
     "slug": "black-fern",
     "name": "Black Fern",
     "category": "Co-ord Set",
-    "price": 9999,
+    "price": 10199,
     "shortDescription": "Sheer net sequin halter top worn over a bustier, with straight-fit pants.",
     "description": "This top is made with sheer net and sequin embroidery, with a wave-cut halter neckline that ties at the back. It's worn over a separate inner bustier and paired with smooth, straight-fit pants — perfect for an elegant evening look.",
     "details": [
@@ -258,7 +258,7 @@ export const products: Product[] = [
     "slug": "butterfly-whisper",
     "name": "Butterfly Whisper",
     "category": "Skirt Set",
-    "price": 9999,
+    "price": 11799,
     "shortDescription": "Butterfly-embroidered crop top with a ruched, draped skirt.",
     "description": "A wine crop top with a high round neckline, embroidered with butterflies and floral vines in pearls and beads, finished with a waist cutout, paired with a draped skirt with a ruched front panel for a soft, flowing finish.",
     "details": [
@@ -344,7 +344,7 @@ export const products: Product[] = [
     "slug": "pearl-trail",
     "name": "Pearl Trail",
     "category": "Saree Set",
-    "price": 9999,
+    "price": 13099,
     "shortDescription": "Pearl trail embroidered blouse with net sleeves and a soft-draped chiffon saree.",
     "description": "A sage blouse with a sweetheart neckline and delicate pearl trail embroidery, finished with full-length sleeves in a pearl-beaded net trellis, paired with a soft-draped chiffon saree for a quiet, romantic finish.",
     "details": [
@@ -429,7 +429,7 @@ export const products: Product[] = [
     "slug": "cygnet",
     "name": "Cygnet",
     "category": "Co-ord Set",
-    "price": 9999,
+    "price": 16399,
     "shortDescription": "Cutwork embroidered jacket over a padded bustier, with straight-fit pants.",
     "description": "An ivory cutwork jacket with hand embroidery in a sequin and bead lattice pattern, worn open over a padded bustier, finished with a wraparound tie, paired with straight-fit pants for a delicate, statement-making look.",
     "details": [
