@@ -29,6 +29,19 @@ export function Hero() {
         sizes="100vw"
         className="object-cover"
       />
+      {hero.backgroundVideo && (
+        <video
+          src={hero.backgroundVideo}
+          poster={hero.backgroundImage}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-ink/15 to-ink/45" />
 
       <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center px-6 text-center">

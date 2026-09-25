@@ -14,6 +14,8 @@ export interface HeroContent {
   headlineLine2: string;
   subheadline: string;
   backgroundImage: string;
+  /** Optional looping BTS video (MP4 URL). backgroundImage doubles as its poster. */
+  backgroundVideo?: string;
   primaryCtaLabel: string;
   primaryCtaHref: string;
   secondaryCtaLabel: string;
@@ -43,6 +45,8 @@ const DEFAULT_HERO: HeroContent = {
   // down the page, so the same photo doesn't appear twice in the first two
   // screens. Admin-editable at /admin/homepage regardless.
   backgroundImage: "/images/mood/collection-signature.jpg",
+  // BTS film — paste the Cloudinary MP4 link here to make it live for visitors.
+  backgroundVideo: "",
   primaryCtaLabel: "Shop the Collection",
   primaryCtaHref: "/shop",
   secondaryCtaLabel: "",

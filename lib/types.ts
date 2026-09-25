@@ -51,6 +51,8 @@ export interface Product {
   sizeGuideType: "standard" | "saree" | "free-size";
   availability: Availability;
   images: ProductImage[];
+  /** Optional product video (MP4 URL, e.g. Cloudinary). Shown in the PDP gallery after the lead photo. */
+  video?: string;
   isNew: boolean;
   isBestSeller: boolean;
   rating: number;

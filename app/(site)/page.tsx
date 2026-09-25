@@ -1,13 +1,8 @@
 import { Hero } from "@/components/home/hero";
 import { EditorialCampaign } from "@/components/home/editorial-campaign";
 import { ProductShowcase } from "@/components/home/product-showcase";
-import { FeaturedCollection } from "@/components/home/featured-collection";
 import { CollectionBanner } from "@/components/home/collection-banner";
-import { GraphicBanner } from "@/components/home/graphic-banner";
 import { Craftsmanship } from "@/components/home/craftsmanship";
-import { Lookbook } from "@/components/home/lookbook";
-import { TestimonialsSection } from "@/components/home/testimonials-section";
-import { InstagramGallery } from "@/components/home/instagram-gallery";
 import { NewsletterBand } from "@/components/home/newsletter-band";
 
 // NewArrivals / BestSellers / FeaturedProducts previously ran here as three
@@ -16,19 +11,19 @@ import { NewsletterBand } from "@/components/home/newsletter-band";
 // the collection — so they're replaced with ProductShowcase, one editorial,
 // alternating-sides section per product covering the full six. Their files
 // are left in place, unused, for a future catalogue with more SKUs.
+// Trimmed to the sections that carry real content. Removed (files kept):
+// FeaturedCollection (duplicated EditorialCampaign's single-collection
+// spotlight), GraphicBanner (copy-less filler), Lookbook (stock mood shots),
+// TestimonialsSection (placeholder customer quotes, not real reviews) and
+// InstagramGallery (placeholder posts/likes linking to "#").
 export default function Home() {
   return (
     <>
       <Hero />
       <EditorialCampaign />
       <ProductShowcase />
-      <FeaturedCollection />
       <CollectionBanner />
-      <GraphicBanner />
       <Craftsmanship />
-      <Lookbook />
-      <TestimonialsSection />
-      <InstagramGallery />
       <NewsletterBand />
     </>
   );

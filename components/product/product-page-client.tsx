@@ -7,6 +7,7 @@ import { Container } from "@/components/luxury/container";
 import { Breadcrumb } from "@/components/luxury/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductGallery } from "@/components/product/product-gallery";
+import { productVideos } from "@/lib/data/product-videos";
 import { BuyBox } from "@/components/product/buy-box";
 import { StickyMobileBuyBar } from "@/components/product/sticky-mobile-buy-bar";
 import { DesignerNote } from "@/components/product/designer-note";
@@ -92,7 +93,11 @@ export function ProductPageClient({ slug }: ProductPageClientProps) {
         />
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 xl:gap-20">
-          <ProductGallery images={product.images} productName={product.name} />
+          <ProductGallery
+            images={product.images}
+            productName={product.name}
+            video={product.video || productVideos[product.slug]}
+          />
           <div className="lg:sticky lg:top-28 lg:self-start">
             <BuyBox product={product} />
           </div>

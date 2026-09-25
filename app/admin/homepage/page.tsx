@@ -51,6 +51,9 @@ function HeroTab() {
       <Field label="Background Image" hint="Path or URL to the full-bleed hero image.">
         <Input value={draft.backgroundImage} onChange={(e) => setDraft({ ...draft, backgroundImage: e.target.value })} />
       </Field>
+      <Field label="Background Video (BTS)" hint="Optional MP4 link (Cloudinary). Plays muted on loop behind the headline; the image above shows while it loads and on data-saver.">
+        <Input value={draft.backgroundVideo ?? ""} onChange={(e) => setDraft({ ...draft, backgroundVideo: e.target.value })} placeholder="https://res.cloudinary.com/…/video/upload/….mp4" />
+      </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Primary Button Label">
           <Input value={draft.primaryCtaLabel} onChange={(e) => setDraft({ ...draft, primaryCtaLabel: e.target.value })} />

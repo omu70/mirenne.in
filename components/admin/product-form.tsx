@@ -132,6 +132,7 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
   const [reviewCount, setReviewCount] = React.useState(String(product?.reviewCount ?? "0"));
   const [deliveryEstimate, setDeliveryEstimate] = React.useState(product?.deliveryEstimate ?? "");
   const [tagsText, setTagsText] = React.useState(product ? product.tags.join(", ") : "");
+  const [video, setVideo] = React.useState(product?.video ?? "");
 
   // Keep the slug preview in sync with the name for new products, unless the
   // admin has deliberately typed their own slug. Adjusted during render
@@ -248,6 +249,7 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
       reviewCount: Math.max(0, Number(reviewCount) || 0),
       deliveryEstimate: deliveryEstimate.trim(),
       tags,
+      video: video.trim() || undefined,
     };
 
     if (isEditing) {
@@ -454,6 +456,13 @@ export function ProductForm({ product, onSaved, onCancel }: ProductFormProps) {
               ))}
             </div>
           )}
+        </Field>
+
+        <Field
+          label="Video URL"
+          hint="MP4 link from Cloudinary (Upload → copy the video URL). Plays muted on loop after the first photo. Preview only in this browser — send the link to your developer to make it live for all visitors."
+        >
+          <Input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://res.cloudinary.com/…/video/upload/….mp4" />
         </Field>
 
         <Field label="Tags" hint="Comma-separated, used by search and filters.">

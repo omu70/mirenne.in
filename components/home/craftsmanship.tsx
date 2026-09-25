@@ -19,8 +19,8 @@ export function Craftsmanship() {
       <Container className="grid grid-cols-1 items-center gap-12 md:grid-cols-2 md:gap-20">
         <Reveal className="relative aspect-[4/5] overflow-hidden bg-ivory">
           <Image
-            src="/images/mood/atelier-02.jpg"
-            alt="Warm, textured light evoking the Mirenne atelier where each piece is hand-finished"
+            src="/images/mood/atelier-hands.jpg"
+            alt="An artisan hand-finishing crystal and floral embroidery on a Mirenne bodice"
             fill
             sizes="(min-width: 768px) 45vw, 90vw"
             className="object-cover"
