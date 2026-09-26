@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/input";
 import { cartItemCount, cartSubtotal, useCartStore } from "@/lib/store/cart-store";
-import { FREE_SHIPPING_THRESHOLD, computeTotals, promoDiscountRate } from "@/lib/checkout/pricing";
+import { FREE_SHIPPING_THRESHOLD, computeTotals, couponLabel, type AppliedCoupon } from "@/lib/checkout/pricing";
 import { useProductStore } from "@/lib/store/product-store";
 import { formatINR, isUnoptimizableSrc } from "@/lib/utils";
 
@@ -25,28 +25,41 @@ export function CartDrawer() {
   const setGiftMessage = useCartStore((s) => s.setGiftMessage);
   const giftWrap = useCartStore((s) => s.giftWrap);
   const setGiftWrap = useCartStore((s) => s.setGiftWrap);
-  const promoCode = useCartStore((s) => s.promoCode);
-  const applyPromoCode = useCartStore((s) => s.applyPromoCode);
+  const coupon = useCartStore((s) => s.coupon);
+  const applyCoupon = useCartStore((s) => s.applyCoupon);
   const products = useProductStore((s) => s.products);
 
   const [promoInput, setPromoInput] = React.useState("");
+  const [checkingPromo, setCheckingPromo] = React.useState(false);
 
   const subtotal = cartSubtotal(items);
-  const discountRate = promoDiscountRate(promoCode);
   // Same helper the checkout page and the payment route use, so what's shown
   // here can't drift from what gets charged.
-  const { discount, shipping: shippingEstimate, total } = computeTotals(subtotal, promoCode);
+  const { discount, shipping: shippingEstimate, total } = computeTotals(subtotal, coupon);
 
   const recommended = products.filter((p) => p.isBestSeller && !items.some((i) => i.productId === p.id)).slice(0, 3);
 
-  const handleApplyPromo = () => {
-    if (!promoInput.trim()) return;
-    const rate = promoDiscountRate(promoInput);
-    if (rate > 0) {
-      applyPromoCode(promoInput.toUpperCase());
-      toast.success(`Promo code ${promoInput.toUpperCase()} applied.`);
-    } else {
-      toast.error("That promo code is not valid.");
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim() || checkingPromo) return;
+    setCheckingPromo(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput, subtotal }),
+      });
+      const data = (await res.json()) as { ok: boolean; coupon?: AppliedCoupon; message?: string };
+      if (data.ok && data.coupon) {
+        applyCoupon(data.coupon);
+        setPromoInput("");
+        toast.success(`${data.coupon.code} applied — ${couponLabel(data.coupon)}.`);
+      } else {
+        toast.error(data.message ?? "That promo code isn't valid.");
+      }
+    } catch {
+      toast.error("Couldn't check that code. Try again.");
+    } finally {
+      setCheckingPromo(false);
     }
   };
 
@@ -192,13 +205,21 @@ export function CartDrawer() {
                     placeholder="Enter code"
                     className="h-11 flex-1 border border-hairline-dark bg-transparent px-3 text-sm uppercase placeholder:normal-case placeholder:text-gold/60 focus:outline-none focus:border-ink"
                   />
-                  <Button variant="secondary" size="sm" onClick={handleApplyPromo}>
-                    Apply
+                  <Button variant="secondary" size="sm" onClick={handleApplyPromo} disabled={checkingPromo}>
+                    {checkingPromo ? "…" : "Apply"}
                   </Button>
                 </div>
-                {promoCode && (
-                  <p className="mt-2 text-xs text-gold">
-                    {promoCode} applied — {Math.round(discountRate * 100)}% off
+                {coupon && (
+                  <p className="mt-2 flex items-center justify-between text-xs text-gold">
+                    <span>
+                      {coupon.code} applied — {couponLabel(coupon)}
+                      {discount === 0 && coupon.minSubtotal > subtotal && (
+                        <> (needs {formatINR(coupon.minSubtotal)}+)</>
+                      )}
+                    </span>
+                    <button type="button" onClick={() => applyCoupon(null)} className="cursor-pointer underline">
+                      Remove
+                    </button>
                   </p>
                 )}
               </div>

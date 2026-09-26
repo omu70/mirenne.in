@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -13,18 +13,19 @@ import {
   Menu as MenuIcon,
   LogOut,
   ExternalLink,
+  TicketPercent,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { useAdminAuthStore } from "@/lib/store/admin-auth-store";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", href: "/admin/customers", icon: Users },
+  { label: "Coupons", href: "/admin/coupons", icon: TicketPercent },
   { label: "Homepage", href: "/admin/homepage", icon: Home },
   { label: "Menu", href: "/admin/menu", icon: MenuIcon },
   { label: "Collections", href: "/admin/collections", icon: Layers },
@@ -32,6 +33,12 @@ const NAV_ITEMS = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const signOut = React.useCallback(async () => {
+    await fetch("/api/admin/logout", { method: "POST" }).catch(() => null);
+    router.replace("/admin/login");
+    router.refresh();
+  }, [router]);
 
   // The product store can't write to local storage once it's full (uploaded
   // photos are stored inline as data URLs). It reports that here rather than
@@ -46,7 +53,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("mirenne:storage-full", onFull);
     return () => window.removeEventListener("mirenne:storage-full", onFull);
   }, []);
-  const lock = useAdminAuthStore((s) => s.lock);
+  // The sign-in screen renders without the sidebar.
+  if (pathname === "/admin/login" || pathname.endsWith("/slip")) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen bg-ivory">
@@ -88,11 +96,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             View Site
           </Link>
           <button
-            onClick={lock}
+            onClick={signOut}
             className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-left text-sm text-ink/80 transition-colors hover:bg-ivory"
           >
             <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-            Lock Admin
+            Sign Out
           </button>
         </div>
       </aside>
@@ -100,8 +108,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full flex-1 flex-col lg:pl-64">
         <header className="flex items-center justify-between border-b border-hairline bg-ivory px-6 py-4 lg:hidden">
           <Logo variant="horizontal" className="text-ink" markClassName="h-6" wordmarkClassName="text-sm" />
-          <button onClick={lock} className="label-luxury cursor-pointer text-graphite">
-            Lock
+          <button onClick={signOut} className="label-luxury cursor-pointer text-graphite">
+            Sign Out
           </button>
         </header>
 

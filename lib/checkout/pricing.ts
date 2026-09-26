@@ -1,26 +1,32 @@
 import type { CartItem } from "@/lib/store/cart-store";
 
 /**
- * The single source of truth for what a basket costs. Deliberately free of
- * React and of any "use client" module, because three separate places have to
- * agree on the number to the rupee: the cart drawer's running total, the
- * checkout page's summary, and the server route that tells Razorpay how much
- * to charge. When these constants lived as locals inside cart-drawer.tsx, the
- * only thing stopping the displayed total and the charged amount from drifting
- * apart was that nothing else computed a total yet.
+ * The single source of truth for what a basket costs. Free of React and of any
+ * "use client" module, because three places have to agree on the number to the
+ * rupee: the cart drawer, the checkout summary, and the server route that tells
+ * Razorpay how much to charge. The browser only ever uses this to *display* a
+ * total — the server re-runs it with the coupon it looked up itself.
  */
 
 export const FREE_SHIPPING_THRESHOLD = 15000;
 export const STANDARD_SHIPPING = 350;
 
-const PROMO_CODES: Record<string, number> = {
-  MIRENNE10: 0.1,
-  WELCOME15: 0.15,
-};
+/** The parts of a coupon the price maths needs. Coupons themselves live in the database. */
+export interface AppliedCoupon {
+  code: string;
+  kind: "percent" | "flat";
+  value: number;
+  minSubtotal: number;
+}
 
-export function promoDiscountRate(code: string | null): number {
-  if (!code) return 0;
-  return PROMO_CODES[code.toUpperCase()] ?? 0;
+export function couponDiscount(subtotal: number, coupon: AppliedCoupon | null): number {
+  if (!coupon || subtotal <= 0 || subtotal < coupon.minSubtotal) return 0;
+  const raw = coupon.kind === "percent" ? Math.round((subtotal * coupon.value) / 100) : coupon.value;
+  return Math.min(raw, subtotal);
+}
+
+export function couponLabel(coupon: AppliedCoupon): string {
+  return coupon.kind === "percent" ? `${coupon.value}% off` : `₹${coupon.value.toLocaleString("en-IN")} off`;
 }
 
 export function shippingFor(subtotal: number): number {
@@ -35,16 +41,14 @@ export interface OrderTotals {
 }
 
 /**
- * Rounding happens once, on the discount, and every downstream figure is
- * derived from that rounded value — so the total always equals the lines the
- * customer was shown adding up, with no half-rupee drift between the summary
- * and the amount sent to Razorpay.
+ * Rounding happens once, on the discount, and every downstream figure derives
+ * from that — so the total always equals the lines the customer was shown.
+ * Free shipping is judged on the pre-discount subtotal, as before.
  */
-export function computeTotals(subtotal: number, promoCode: string | null): OrderTotals {
-  const discount = Math.round(subtotal * promoDiscountRate(promoCode));
-  const discounted = subtotal - discount;
+export function computeTotals(subtotal: number, coupon: AppliedCoupon | null): OrderTotals {
+  const discount = couponDiscount(subtotal, coupon);
   const shipping = shippingFor(subtotal);
-  return { subtotal, discount, shipping, total: discounted + shipping };
+  return { subtotal, discount, shipping, total: subtotal - discount + shipping };
 }
 
 export function lineSubtotal(items: { price: number; quantity: number }[]): number {

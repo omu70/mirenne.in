@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/luxury/reveal";
@@ -21,6 +20,13 @@ import { useContentStore } from "@/lib/store/content-store";
 export function Hero() {
   const hero = useContentStore((s) => s.hero);
   const mobilePoster = hero.backgroundImageMobile;
+  const posterCommon = { alt: "", fill: true, sizes: "100vw", priority: true } as const;
+  const {
+    props: { srcSet: desktopSrcSet, ...imgProps },
+  } = getImageProps({ ...posterCommon, src: hero.backgroundImage });
+  const {
+    props: { srcSet: mobileSrcSet },
+  } = getImageProps({ ...posterCommon, src: mobilePoster || hero.backgroundImage });
   // Picked after mount so each device downloads exactly one reel — a pair of
   // CSS-hidden <video>s would still both fetch.
   const [videoSrc, setVideoSrc] = React.useState<string | undefined>();
@@ -35,18 +41,14 @@ export function Hero() {
 
   return (
     <section className="relative -mt-20 flex h-screen min-h-[640px] items-center justify-center overflow-hidden md:-mt-24 lg:-mt-[140px]">
-      {/* Posters: each reel's opening frame, art-directed per breakpoint. */}
-      <Image
-        src={hero.backgroundImage}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className={cn("object-cover", mobilePoster && "hidden md:block")}
-      />
-      {mobilePoster && (
-        <Image src={mobilePoster} alt="" fill priority sizes="100vw" className="object-cover md:hidden" />
-      )}
+      {/* Posters: each reel's opening frame, art-directed per breakpoint with
+          <picture> so a device downloads only its own poster. */}
+      <picture>
+        {mobilePoster && <source media="(max-width: 767px)" srcSet={mobileSrcSet} />}
+        <source media={mobilePoster ? "(min-width: 768px)" : "all"} srcSet={desktopSrcSet} />
+        {/* eslint-disable-next-line jsx-a11y/alt-text -- decorative; alt="" comes from imgProps */}
+        <img {...imgProps} className="object-cover" />
+      </picture>
       {videoSrc && (
         <video
           key={videoSrc}

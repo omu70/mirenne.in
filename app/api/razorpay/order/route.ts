@@ -1,51 +1,46 @@
 import { NextResponse } from "next/server";
 import { products } from "@/lib/data/products";
-import { computeTotals, lineSubtotal, toPaise, type CheckoutLine } from "@/lib/checkout/pricing";
+import { computeTotals, lineSubtotal, toPaise, type AppliedCoupon, type CheckoutLine } from "@/lib/checkout/pricing";
+import { checkCoupon } from "@/lib/server/coupons";
+import { attachRazorpayOrder, createPendingOrder } from "@/lib/server/orders";
+import { isDatabaseConfigured } from "@/lib/server/db";
+import { razorpayKeys, razorpayRequest } from "@/lib/server/razorpay";
 
 /**
- * Creates the Razorpay order the browser then pays against.
+ * Starts a payment. The order is written to the database *before* Razorpay is
+ * asked for a payment, so the shop has a record even if the shopper abandons
+ * the payment window or closes the tab halfway through.
  *
- * The browser sends only WHAT is being bought — slug, colour, size, quantity —
- * never the price or the total. Prices are looked up here, in the catalogue
- * committed to the repo, and the amount is recomputed from scratch. Anything
- * else and a customer could edit the request in devtools and buy a ₹52,000
- * gown for ₹1.
- *
- * The consequence is worth stating plainly: only pieces that exist in
- * lib/data/products.ts can be sold. A product added in /admin/products lives
- * in one browser's local storage and the server has never heard of it, so it
- * is rejected here rather than being quietly charged at whatever price the
- * client claimed. To make a piece purchasable, it has to be committed.
+ * The browser sends only WHAT is being bought — never a price or a total.
+ * Prices come from the catalogue committed to the repo and the coupon is looked
+ * up in the database, so nothing the client claims can change the amount.
  */
-
-const RAZORPAY_ORDERS_URL = "https://api.razorpay.com/v1/orders";
 
 interface OrderRequestBody {
   lines?: CheckoutLine[];
   promoCode?: string | null;
   customer?: { name?: string; email?: string; phone?: string };
+  shipping?: { address?: string; city?: string; state?: string; pincode?: string; note?: string };
+  gift?: { wrap?: boolean; message?: string };
 }
 
-function orderReceipt(): string {
-  // Short, human-quotable, and unique enough for a receipt field that Razorpay
-  // caps at 40 characters: MRN- plus a base-36 timestamp and a random tail.
-  return `MRN-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+const str = (v: unknown, max = 500) => String(v ?? "").trim().slice(0, max);
+
+function badRequest(message: string, error = "bad_request") {
+  return NextResponse.json({ error, message }, { status: 400 });
 }
 
 export async function POST(request: Request) {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (!keyId || !keySecret) {
-    // A deliberate, readable failure. Without it the fetch below returns a
-    // Razorpay auth error and the shopper sees "payment failed" for what is
-    // actually a missing line in .env.local.
+  const keys = razorpayKeys();
+  if (!keys) {
     return NextResponse.json(
-      {
-        error: "payments_not_configured",
-        message:
-          "Payments aren't configured on this deployment. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env.local and restart the server.",
-      },
+      { error: "payments_not_configured", message: "Payments aren't configured yet. Add the Razorpay keys to the environment." },
+      { status: 503 }
+    );
+  }
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json(
+      { error: "database_not_configured", message: "Orders can't be saved yet. Add DATABASE_URL to the environment." },
       { status: 503 }
     );
   }
@@ -54,92 +49,95 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "bad_request", message: "Expected a JSON body." }, { status: 400 });
+    return badRequest("Expected a JSON body.");
   }
 
+  // --- who and where --------------------------------------------------------
+  const customer = { name: str(body.customer?.name, 120), email: str(body.customer?.email, 200), phone: str(body.customer?.phone, 20) };
+  const shipping = {
+    address: str(body.shipping?.address),
+    city: str(body.shipping?.city, 100),
+    state: str(body.shipping?.state, 100),
+    pincode: str(body.shipping?.pincode, 6),
+    note: str(body.shipping?.note),
+  };
+  if (!customer.name) return badRequest("Enter the name this order is for.");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customer.email)) return badRequest("Enter a valid email address.");
+  if (!/^[0-9]{10}$/.test(customer.phone.replace(/\D/g, "").slice(-10))) return badRequest("Enter a 10-digit mobile number.");
+  if (!shipping.address || !shipping.city || !shipping.state) return badRequest("Enter the full delivery address.");
+  if (!/^[1-9][0-9]{5}$/.test(shipping.pincode)) return badRequest("Enter a 6-digit PIN code.");
+
+  // --- what, at the catalogue's prices -------------------------------------
   const lines = body.lines ?? [];
-  if (lines.length === 0) {
-    return NextResponse.json({ error: "empty_cart", message: "There's nothing in the bag." }, { status: 400 });
-  }
+  if (lines.length === 0 || lines.length > 30) return badRequest("There's nothing in the bag.", "empty_cart");
 
-  const priced: { productName: string; slug: string; color: string; size: string; quantity: number; price: number }[] =
-    [];
-
+  const priced: { slug: string; name: string; color: string; size: string; customization: string; quantity: number; unitPrice: number }[] = [];
   for (const line of lines) {
     const product = products.find((p) => p.slug === line.slug);
     if (!product) {
       return NextResponse.json(
-        {
-          error: "unknown_product",
-          message: `"${line.slug}" isn't in the published catalogue, so it can't be purchased yet.`,
-        },
+        { error: "unknown_product", message: `"${line.slug}" isn't in the published catalogue, so it can't be purchased yet.` },
         { status: 409 }
       );
     }
-
     const quantity = Math.floor(Number(line.quantity));
     if (!Number.isFinite(quantity) || quantity < 1 || quantity > 9) {
-      return NextResponse.json(
-        { error: "bad_quantity", message: `Quantity for ${product.name} must be between 1 and 9.` },
-        { status: 400 }
-      );
+      return badRequest(`Quantity for ${product.name} must be between 1 and 9.`, "bad_quantity");
     }
-
     priced.push({
-      productName: product.name,
       slug: product.slug,
-      color: String(line.color ?? ""),
-      size: String(line.size ?? ""),
+      name: product.name,
+      color: str(line.color, 60),
+      size: str(line.size, 40),
+      customization: str(line.customization, 1000),
       quantity,
-      price: product.price,
+      unitPrice: product.price,
     });
   }
 
-  const totals = computeTotals(lineSubtotal(priced), body.promoCode ?? null);
-  const receipt = orderReceipt();
+  const subtotal = lineSubtotal(priced.map((p) => ({ price: p.unitPrice, quantity: p.quantity })));
 
-  const razorpayResponse = await fetch(RAZORPAY_ORDERS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
-    },
-    body: JSON.stringify({
-      amount: toPaise(totals.total),
-      currency: "INR",
-      receipt,
-      notes: {
-        customerName: body.customer?.name ?? "",
-        customerEmail: body.customer?.email ?? "",
-        customerPhone: body.customer?.phone ?? "",
-        pieces: priced.map((p) => `${p.productName} (${p.size})`).join(", ").slice(0, 480),
-      },
-    }),
+  // --- coupon, re-checked here: this is the check that counts ---------------
+  let coupon: AppliedCoupon | null = null;
+  if (body.promoCode) {
+    const check = await checkCoupon(body.promoCode, subtotal);
+    if (!check.ok) return NextResponse.json({ error: "coupon_invalid", message: check.message }, { status: 409 });
+    coupon = check.coupon;
+  }
+  const totals = computeTotals(subtotal, coupon);
+
+  const order = await createPendingOrder({
+    customer,
+    shipping,
+    gift: { wrap: Boolean(body.gift?.wrap), message: str(body.gift?.message) },
+    lines: priced,
+    totals,
+    couponCode: coupon?.code ?? null,
   });
 
-  if (!razorpayResponse.ok) {
-    const detail = await razorpayResponse.text();
-    console.error("[razorpay] order creation failed", razorpayResponse.status, detail);
+  const rzp = await razorpayRequest<{ id: string; amount: number; currency: string }>("/orders", {
+    amount: toPaise(totals.total),
+    currency: "INR",
+    receipt: order.number,
+    notes: { order_number: order.number, order_id: order.id, customer_email: customer.email },
+  });
+  if (!rzp.ok) {
+    console.error("[razorpay] order creation failed", rzp.error);
     return NextResponse.json(
-      { error: "razorpay_error", message: "Razorpay couldn't create this order. Check the API keys and try again." },
+      { error: "razorpay_error", message: "Razorpay couldn't start this payment. Please try again in a moment." },
       { status: 502 }
     );
   }
-
-  const order = (await razorpayResponse.json()) as { id: string; amount: number; currency: string };
+  await attachRazorpayOrder(order.id, rzp.data.id);
 
   return NextResponse.json({
-    razorpayOrderId: order.id,
-    amount: order.amount,
-    currency: order.currency,
-    receipt,
-    // The key id is public by design — it's what the browser passes to the
-    // Razorpay modal. Returning it here keeps it in one place rather than
-    // needing a second, NEXT_PUBLIC_ copy of the same value.
-    keyId,
-    // Server-authoritative figures, so the summary the shopper confirms is the
-    // one that was actually charged rather than the client's own arithmetic.
+    razorpayOrderId: rzp.data.id,
+    amount: rzp.data.amount,
+    currency: rzp.data.currency,
+    receipt: order.number,
+    orderNumber: order.number,
+    orderToken: order.public_token,
+    keyId: keys.keyId, // public by design — the browser passes it to the Razorpay modal
     totals,
-    items: priced,
   });
 }

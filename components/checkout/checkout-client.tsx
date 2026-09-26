@@ -14,7 +14,6 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cartSubtotal, useCartStore } from "@/lib/store/cart-store";
-import { useOrderStore, type Order } from "@/lib/store/order-store";
 import { computeTotals } from "@/lib/checkout/pricing";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn, formatINR, isUnoptimizableSrc } from "@/lib/utils";
@@ -76,11 +75,11 @@ export function CheckoutClient() {
   const router = useRouter();
 
   const items = useCartStore((s) => s.items);
-  const promoCode = useCartStore((s) => s.promoCode);
+  const coupon = useCartStore((s) => s.coupon);
+  const applyCoupon = useCartStore((s) => s.applyCoupon);
   const giftMessage = useCartStore((s) => s.giftMessage);
   const giftWrap = useCartStore((s) => s.giftWrap);
   const clearCart = useCartStore((s) => s.clearCart);
-  const addOrder = useOrderStore((s) => s.addOrder);
 
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
   const [scriptState, setScriptState] = React.useState<"loading" | "ready" | "failed">("loading");
@@ -165,9 +164,9 @@ export function CheckoutClient() {
     reportedCheckout.current = true;
     track.beginCheckout(
       items.map((i) => ({ id: i.productId, slug: i.slug, name: i.name, price: i.price, quantity: i.quantity })),
-      computeTotals(cartSubtotal(items), promoCode).total
+      computeTotals(cartSubtotal(items), coupon).total
     );
-  }, [items, promoCode]);
+  }, [items, coupon]);
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -176,7 +175,7 @@ export function CheckoutClient() {
   // the cart drawer to the rupee; the amount actually charged is recomputed
   // server-side and echoed back, and that copy is what gets recorded.
   const subtotal = cartSubtotal(items);
-  const totals = computeTotals(subtotal, promoCode);
+  const totals = computeTotals(subtotal, coupon);
 
   if (!mounted) {
     return (
@@ -210,40 +209,6 @@ export function CheckoutClient() {
       </Container>
     );
   }
-
-  const recordOrder = (receipt: string, serverTotals: typeof totals, paymentId: string) => {
-    const order: Order = {
-      id: receipt,
-      customerName: form.name.trim(),
-      customerEmail: form.email.trim(),
-      city: `${form.city.trim()}, ${form.state.trim()}`,
-      items: items.map((i) => ({
-        productName: i.name,
-        slug: i.slug,
-        color: i.color,
-        size: i.size,
-        quantity: i.quantity,
-        price: i.price,
-      })),
-      subtotal: serverTotals.subtotal,
-      shipping: serverTotals.shipping,
-      total: serverTotals.total,
-      status: "pending",
-      paymentStatus: "paid",
-      placedAt: new Date().toISOString().slice(0, 10),
-      notes: [
-        `Razorpay payment ${paymentId}`,
-        `${form.address.trim()}, ${form.city.trim()}, ${form.state.trim()} ${form.pincode.trim()}`,
-        `Phone ${form.phone.trim()}`,
-        giftWrap ? "Gift wrap requested." : "",
-        giftMessage.trim() ? `Gift message: ${giftMessage.trim()}` : "",
-        form.notes.trim(),
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    };
-    addOrder(order);
-  };
 
   const handlePay = async () => {
     const problem = validate(form);
@@ -280,14 +245,25 @@ export function CheckoutClient() {
             quantity: i.quantity,
             customization: i.customization,
           })),
-          promoCode,
+          promoCode: coupon?.code ?? null,
           customer: { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() },
+          shipping: {
+            address: form.address.trim(),
+            city: form.city.trim(),
+            state: form.state.trim(),
+            pincode: form.pincode.trim(),
+            note: form.notes.trim(),
+          },
+          gift: { wrap: giftWrap, message: giftMessage.trim() },
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        // A code that expired or ran out between the bag and checkout: drop it
+        // so the shopper sees the real total and can pay without it.
+        if (data.error === "coupon_invalid") applyCoupon(null);
         toast.error(data.message ?? "Couldn't start the payment.", { duration: 8000 });
         setPaying(false);
         return;
@@ -325,7 +301,6 @@ export function CheckoutClient() {
               setPaying(false);
               return;
             }
-            recordOrder(data.receipt, data.totals, response.razorpay_payment_id);
             // Only after verification — reporting a Purchase off the browser's
             // unverified success callback would feed Meta and GA4 revenue that
             // never actually cleared.
@@ -336,9 +311,11 @@ export function CheckoutClient() {
               data.totals.shipping
             );
             clearCart();
-            router.push(`/checkout/success?order=${encodeURIComponent(data.receipt)}`);
+            router.push(
+              `/checkout/success?order=${encodeURIComponent(data.orderNumber)}&t=${encodeURIComponent(data.orderToken)}`
+            );
           } catch {
-            toast.error("The payment went through but we couldn't confirm it. Please contact the studio.", {
+            toast.error(`The payment went through but we couldn't confirm it. Please contact the studio with order ${data.orderNumber}.`, {
               duration: 12000,
             });
             setPaying(false);
@@ -476,7 +453,7 @@ export function CheckoutClient() {
               <div className="mt-6 border-t border-hairline pt-5 text-sm">
                 <Row label="Subtotal" value={formatINR(totals.subtotal)} />
                 {totals.discount > 0 && (
-                  <Row label={`Discount${promoCode ? ` (${promoCode})` : ""}`} value={`−${formatINR(totals.discount)}`} />
+                  <Row label={`Discount${coupon ? ` (${coupon.code})` : ""}`} value={`−${formatINR(totals.discount)}`} />
                 )}
                 <Row
                   label="Shipping"

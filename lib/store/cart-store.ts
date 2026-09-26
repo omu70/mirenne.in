@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AppliedCoupon } from "@/lib/checkout/pricing";
 
 export interface CartItem {
   productId: string;
@@ -25,13 +26,14 @@ interface CartState {
   isOpen: boolean;
   giftMessage: string;
   giftWrap: boolean;
-  promoCode: string | null;
+  /** Checked against the database when applied; re-checked by the server at payment. */
+  coupon: AppliedCoupon | null;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (productId: string, color: string, size: string, customization?: string) => void;
   updateQuantity: (productId: string, color: string, size: string, quantity: number, customization?: string) => void;
   setGiftMessage: (msg: string) => void;
   setGiftWrap: (value: boolean) => void;
-  applyPromoCode: (code: string | null) => void;
+  applyCoupon: (coupon: AppliedCoupon | null) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -61,7 +63,7 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       giftMessage: "",
       giftWrap: false,
-      promoCode: null,
+      coupon: null,
       addItem: (item, quantity = 1) =>
         set((state) => {
           const existing = state.items.find((i) => sameLine(i, item));
@@ -87,13 +89,23 @@ export const useCartStore = create<CartState>()(
         })),
       setGiftMessage: (msg) => set({ giftMessage: msg }),
       setGiftWrap: (value) => set({ giftWrap: value }),
-      applyPromoCode: (code) => set({ promoCode: code }),
-      clearCart: () => set({ items: [], giftMessage: "", giftWrap: false, promoCode: null }),
+      applyCoupon: (coupon) => set({ coupon }),
+      clearCart: () => set({ items: [], giftMessage: "", giftWrap: false, coupon: null }),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
     }),
-    { name: "mirenne-cart" }
+    {
+      name: "mirenne-cart",
+      // v1: promo codes moved from a hard-coded list to the database; drop any
+      // old string code rather than carry it over unchecked.
+      version: 1,
+      migrate: (persisted) => {
+        const state = { ...(persisted as Record<string, unknown>) };
+        delete state.promoCode;
+        return { ...state, coupon: null } as unknown as CartState;
+      },
+    }
   )
 );
 
@@ -105,6 +117,3 @@ export function cartItemCount(items: CartItem[]): number {
   return items.reduce((sum, i) => sum + i.quantity, 0);
 }
 
-// Promo rates and shipping rules live in lib/checkout/pricing.ts — a plain
-// module the server routes can import too. This one is "use client".
-export { promoDiscountRate } from "@/lib/checkout/pricing";

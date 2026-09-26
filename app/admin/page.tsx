@@ -1,53 +1,54 @@
-"use client";
-
 import Link from "next/link";
-import { Package, ShoppingCart, Users, TriangleAlert } from "lucide-react";
+import { connection } from "next/server";
+import { IndianRupee, PackageCheck, ShoppingBag, Users, Clock, CalendarDays } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { useProductStore } from "@/lib/store/product-store";
-import { useOrderStore } from "@/lib/store/order-store";
-import { useCustomerStore } from "@/lib/store/customer-store";
-import { useMounted } from "@/lib/hooks/use-mounted";
+import { DbNotice } from "@/components/admin/commerce/db-notice";
+import { OrderStatusBadge } from "@/components/admin/commerce/status-badge";
+import { fmtDate } from "@/components/admin/commerce/format";
+import { isDatabaseConfigured } from "@/lib/server/db";
+import { dashboardStats } from "@/lib/server/admin-queries";
+import { isEmailConfigured } from "@/lib/server/email";
+import { razorpayKeys } from "@/lib/server/razorpay";
 import { formatINR } from "@/lib/utils";
 
-export default function AdminDashboardPage() {
-  const mounted = useMounted();
-  const products = useProductStore((s) => s.products);
-  const orders = useOrderStore((s) => s.orders);
-  const customers = useCustomerStore((s) => s.customers);
+export default async function AdminDashboardPage() {
+  await connection();
+  if (!isDatabaseConfigured()) return <DbNotice title="Dashboard" />;
+  const s = await dashboardStats();
 
-  if (!mounted) return null;
-
-  const revenue = orders.filter((o) => o.paymentStatus === "paid").reduce((sum, o) => sum + o.total, 0);
-  const lowStock = products.filter((p) => p.availability === "low-stock").length;
-  const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
-  const recentOrders = [...orders].sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1)).slice(0, 5);
+  const setup = [
+    { ok: Boolean(razorpayKeys()), label: "Razorpay keys" },
+    { ok: Boolean(process.env.RAZORPAY_WEBHOOK_SECRET), label: "Razorpay webhook" },
+    { ok: isEmailConfigured(), label: "Order emails (Resend)" },
+    { ok: Boolean(process.env.ORDER_ALERT_EMAIL), label: "New-order alerts" },
+  ].filter((x) => !x.ok);
 
   const stats = [
-    { label: "Products", value: products.length, href: "/admin/products", icon: Package },
-    { label: "Orders", value: orders.length, href: "/admin/orders", icon: ShoppingCart },
-    { label: "Customers", value: customers.length, href: "/admin/customers", icon: Users },
-    { label: "Low Stock", value: lowStock, href: "/admin/products", icon: TriangleAlert },
+    { label: "Revenue (All Time)", value: formatINR(s.revenue), icon: IndianRupee, href: "/admin/orders" },
+    { label: "This Month", value: formatINR(s.month_revenue), sub: `${s.month_orders} orders`, icon: CalendarDays, href: "/admin/orders" },
+    { label: "To Dispatch", value: String(s.to_dispatch), icon: PackageCheck, href: "/admin/orders?status=to_dispatch" },
+    { label: "Customers", value: String(s.customers), icon: Users, href: "/admin/customers" },
   ];
 
   return (
     <div>
-      <AdminPageHeader
-        title="Dashboard"
-        description="A quick look at the catalogue, orders, and customers you're managing from this browser."
-      />
+      <AdminPageHeader title="Dashboard" description="Live figures from paid orders, net of refunds." />
+
+      {setup.length > 0 && (
+        <div className="mb-8 border border-gold/40 bg-gold/5 p-4 text-sm text-ink">
+          Still to set up: {setup.map((x) => x.label).join(", ")}. See SETUP.md in the project.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Link
-              key={stat.label}
-              href={stat.href}
-              className="border border-hairline bg-paper p-6 transition-colors hover:border-ink"
-            >
+            <Link key={stat.label} href={stat.href} className="border border-hairline bg-paper p-6 transition-colors hover:border-ink">
               <Icon className="h-5 w-5 text-graphite" strokeWidth={1.25} />
-              <p className="mt-4 font-serif text-3xl text-ink">{stat.value}</p>
+              <p className="mt-4 font-serif text-2xl text-ink md:text-3xl">{stat.value}</p>
               <p className="label-luxury mt-1 text-graphite">{stat.label}</p>
+              {stat.sub && <p className="mt-1 text-xs text-graphite">{stat.sub}</p>}
             </Link>
           );
         })}
@@ -55,42 +56,70 @@ export default function AdminDashboardPage() {
 
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="border border-hairline bg-paper p-6 lg:col-span-2">
-          <p className="label-luxury mb-5 text-ink">Recent Orders</p>
-          {recentOrders.length === 0 ? (
-            <p className="text-sm text-graphite">No orders yet.</p>
+          <div className="mb-5 flex items-center justify-between">
+            <p className="label-luxury text-ink">Recent Orders</p>
+            <Link href="/admin/orders" className="label-luxury text-graphite hover:text-ink">
+              View All
+            </Link>
+          </div>
+          {s.recent.length === 0 ? (
+            <p className="text-sm text-graphite">No paid orders yet. They&apos;ll appear here the moment someone checks out.</p>
           ) : (
             <div className="flex flex-col divide-y divide-hairline">
-              {recentOrders.map((order) => (
+              {s.recent.map((o) => (
                 <Link
-                  key={order.id}
-                  href="/admin/orders"
-                  className="flex items-center justify-between gap-4 py-3 text-sm transition-colors hover:text-gold-dark"
+                  key={o.id}
+                  href={`/admin/orders/${o.id}`}
+                  className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 py-3 text-sm hover:text-gold-dark sm:grid-cols-[110px_1fr_auto_auto]"
                 >
-                  <span className="text-ink">{order.id}</span>
-                  <span className="flex-1 truncate text-graphite">{order.customerName}</span>
-                  <span className="capitalize text-graphite">{order.status}</span>
-                  <span className="text-ink">{formatINR(order.total)}</span>
+                  <span className="text-ink">{o.number}</span>
+                  <span className="truncate text-graphite">{o.customer_name}</span>
+                  <OrderStatusBadge status={o.status} />
+                  <span className="text-right text-ink">{formatINR(o.total)}</span>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <div className="border border-hairline bg-paper p-6">
-          <p className="label-luxury mb-5 text-ink">Revenue (Paid Orders)</p>
-          <p className="font-serif text-3xl text-ink">{formatINR(revenue)}</p>
-          <p className="mt-4 text-xs text-graphite">
-            {pendingOrders} order{pendingOrders === 1 ? "" : "s"} pending or in progress.
-          </p>
+        <div className="flex flex-col gap-6">
+          <div className="border border-hairline bg-paper p-6">
+            <p className="label-luxury mb-5 text-ink">Best Sellers</p>
+            {s.topProducts.length === 0 ? (
+              <p className="text-sm text-graphite">No sales yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-3 text-sm">
+                {s.topProducts.map((p) => (
+                  <li key={p.product_name} className="flex justify-between gap-3">
+                    <span className="text-ink">{p.product_name}</span>
+                    <span className="shrink-0 text-graphite">
+                      {p.units} sold · {formatINR(p.revenue)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <Link
+            href="/admin/orders?status=pending_payment"
+            className="flex items-center gap-4 border border-hairline bg-paper p-6 transition-colors hover:border-ink"
+          >
+            <Clock className="h-5 w-5 text-graphite" strokeWidth={1.25} />
+            <div>
+              <p className="font-serif text-2xl text-ink">{s.abandoned}</p>
+              <p className="label-luxury text-graphite">Unfinished Checkouts (7 Days)</p>
+            </div>
+          </Link>
+          <div className="flex items-center gap-4 border border-hairline bg-paper p-6">
+            <ShoppingBag className="h-5 w-5 text-graphite" strokeWidth={1.25} />
+            <div>
+              <p className="font-serif text-2xl text-ink">{s.paid_orders}</p>
+              <p className="label-luxury text-graphite">Paid Orders (All Time)</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      <p className="mt-10 max-w-2xl text-xs leading-relaxed text-graphite">
-        This is a frontend-only build with no server or database — everything you add or edit across these admin
-        screens is saved to this browser&apos;s local storage, not to a shared backend. It won&apos;t sync to
-        another device or browser, and clearing this browser&apos;s site data will reset it back to the sample
-        content it shipped with.
-      </p>
+      <p className="mt-8 text-xs text-graphite">Updated {fmtDate(new Date())}</p>
     </div>
   );
 }

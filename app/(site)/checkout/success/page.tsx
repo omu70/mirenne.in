@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { OrderConfirmation } from "@/components/checkout/order-confirmation";
 
 export const metadata: Metadata = {
-  title: "Order Confirmed",
+  title: "Your Order",
   robots: { index: false, follow: false },
 };
 
