@@ -16,6 +16,9 @@ export interface HeroContent {
   backgroundImage: string;
   /** Optional looping BTS video (MP4 URL). backgroundImage doubles as its poster. */
   backgroundVideo?: string;
+  /** Portrait versions for phones (below md). Fall back to the desktop ones. */
+  backgroundImageMobile?: string;
+  backgroundVideoMobile?: string;
   primaryCtaLabel: string;
   primaryCtaHref: string;
   secondaryCtaLabel: string;
@@ -44,9 +47,15 @@ const DEFAULT_HERO: HeroContent = {
   // different image than EditorialCampaign's featured collection further
   // down the page, so the same photo doesn't appear twice in the first two
   // screens. Admin-editable at /admin/homepage regardless.
-  backgroundImage: "/images/mood/collection-signature.jpg",
-  // BTS film — paste the Cloudinary MP4 link here to make it live for visitors.
-  backgroundVideo: "",
+  // Hero reel: all six pieces cut together. Desktop is a three-panel strip
+  // (each panel cycles the pieces in a different order, crossfading at
+  // staggered moments); phones get a single full-screen portrait reel.
+  // The posters are each reel's opening frame so nothing jumps when the
+  // video starts.
+  backgroundImage: "/images/hero/hero-reel-poster.jpg",
+  backgroundImageMobile: "/images/hero/hero-reel-poster-mobile.jpg",
+  backgroundVideo: "/videos/hero-reel.mp4",
+  backgroundVideoMobile: "/videos/hero-reel-mobile.mp4",
   primaryCtaLabel: "Shop the Collection",
   primaryCtaHref: "/shop",
   secondaryCtaLabel: "",
@@ -105,7 +114,25 @@ export const useContentStore = create<ContentState>()(
           navigation: DEFAULT_NAVIGATION,
         }),
     }),
-    { name: "mirenne-content" }
+    {
+      name: "mirenne-content",
+      // v1: hero moved to the video reel. Browsers that saved the hero from
+      // /admin/homepage before keep their copy edits but take the new media.
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<ContentState>;
+        if (version < 1 && state?.hero) {
+          state.hero = {
+            ...state.hero,
+            backgroundImage: DEFAULT_HERO.backgroundImage,
+            backgroundImageMobile: DEFAULT_HERO.backgroundImageMobile,
+            backgroundVideo: DEFAULT_HERO.backgroundVideo,
+            backgroundVideoMobile: DEFAULT_HERO.backgroundVideoMobile,
+          };
+        }
+        return state as ContentState;
+      },
+    }
   )
 );
 

@@ -51,9 +51,17 @@ function HeroTab() {
       <Field label="Background Image" hint="Path or URL to the full-bleed hero image.">
         <Input value={draft.backgroundImage} onChange={(e) => setDraft({ ...draft, backgroundImage: e.target.value })} />
       </Field>
-      <Field label="Background Video (BTS)" hint="Optional MP4 link (Cloudinary). Plays muted on loop behind the headline; the image above shows while it loads and on data-saver.">
-        <Input value={draft.backgroundVideo ?? ""} onChange={(e) => setDraft({ ...draft, backgroundVideo: e.target.value })} placeholder="https://res.cloudinary.com/…/video/upload/….mp4" />
+      <Field label="Background Video — Desktop" hint="Path or URL to a landscape MP4. Plays muted on loop behind the headline; the image above shows while it loads.">
+        <Input value={draft.backgroundVideo ?? ""} onChange={(e) => setDraft({ ...draft, backgroundVideo: e.target.value })} placeholder="/videos/hero-reel.mp4" />
       </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Background Image — Mobile" hint="Portrait poster for phones.">
+          <Input value={draft.backgroundImageMobile ?? ""} onChange={(e) => setDraft({ ...draft, backgroundImageMobile: e.target.value })} />
+        </Field>
+        <Field label="Background Video — Mobile" hint="Portrait MP4 for phones.">
+          <Input value={draft.backgroundVideoMobile ?? ""} onChange={(e) => setDraft({ ...draft, backgroundVideoMobile: e.target.value })} placeholder="/videos/hero-reel-mobile.mp4" />
+        </Field>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Primary Button Label">
           <Input value={draft.primaryCtaLabel} onChange={(e) => setDraft({ ...draft, primaryCtaLabel: e.target.value })} />

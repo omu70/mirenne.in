@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,31 +20,46 @@ import { useContentStore } from "@/lib/store/content-store";
  */
 export function Hero() {
   const hero = useContentStore((s) => s.hero);
+  const mobilePoster = hero.backgroundImageMobile;
+  // Picked after mount so each device downloads exactly one reel — a pair of
+  // CSS-hidden <video>s would still both fetch.
+  const [videoSrc, setVideoSrc] = React.useState<string | undefined>();
+  React.useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const pick = () =>
+      setVideoSrc(mq.matches ? hero.backgroundVideo : hero.backgroundVideoMobile || hero.backgroundVideo);
+    pick();
+    mq.addEventListener("change", pick);
+    return () => mq.removeEventListener("change", pick);
+  }, [hero.backgroundVideo, hero.backgroundVideoMobile]);
 
   return (
     <section className="relative -mt-20 flex h-screen min-h-[640px] items-center justify-center overflow-hidden md:-mt-24 lg:-mt-[140px]">
+      {/* Posters: each reel's opening frame, art-directed per breakpoint. */}
       <Image
         src={hero.backgroundImage}
-        alt="Soft taupe and gold editorial light field, the Mirenne atelier mood"
+        alt=""
         fill
         priority
         sizes="100vw"
-        className="object-cover"
+        className={cn("object-cover", mobilePoster && "hidden md:block")}
       />
-      {hero.backgroundVideo && (
+      {mobilePoster && (
+        <Image src={mobilePoster} alt="" fill priority sizes="100vw" className="object-cover md:hidden" />
+      )}
+      {videoSrc && (
         <video
-          src={hero.backgroundVideo}
-          poster={hero.backgroundImage}
+          key={videoSrc}
+          src={videoSrc}
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-ink/15 to-ink/45" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/55 via-ink/35 to-ink/60" />
 
       <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center px-6 text-center">
         {hero.eyebrow && (

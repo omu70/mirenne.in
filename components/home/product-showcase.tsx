@@ -13,6 +13,8 @@ import { SectionHeading } from "@/components/luxury/section-heading";
 import { Reveal } from "@/components/luxury/reveal";
 import { LuxuryBadge } from "@/components/luxury/badge";
 import { Button } from "@/components/ui/button";
+import { AutoplayVideo } from "@/components/luxury/autoplay-video";
+import { productVideos } from "@/lib/data/product-videos";
 import type { Product } from "@/lib/types";
 
 const AVAILABILITY_LABEL: Record<Product["availability"], string> = {
@@ -85,6 +87,7 @@ function ProductRow({
   const toggleWishlist = useWishlistStore((s) => s.toggle);
   const roundedRating = Math.round(product.rating);
   const gallery = product.images.slice(1, 3);
+  const video = product.video || productVideos[product.slug];
 
   return (
     <div
@@ -106,6 +109,17 @@ function ProductRow({
               sizes="(min-width: 1024px) 45vw, 90vw"
               className="object-cover"
             />
+            {/* The piece's film is the main visual when it has one; the lead
+                photo underneath is what shows until the clip starts. */}
+            {video && (
+              <Link href={`/product/${product.slug}`} aria-label={`View ${product.name}`} className="absolute inset-0">
+                <AutoplayVideo
+                  src={video}
+                  aria-label={`${product.name} in motion`}
+                  className="h-full w-full object-cover"
+                />
+              </Link>
+            )}
             <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-2">
               {product.isNew && <LuxuryBadge variant="dark">New</LuxuryBadge>}
               {product.isBestSeller && <LuxuryBadge variant="gold">Best Seller</LuxuryBadge>}
