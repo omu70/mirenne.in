@@ -1,7 +1,5 @@
 import { Hero } from "@/components/home/hero";
-import { EditorialCampaign } from "@/components/home/editorial-campaign";
 import { ProductShowcase } from "@/components/home/product-showcase";
-import { CollectionBanner } from "@/components/home/collection-banner";
 import { Craftsmanship } from "@/components/home/craftsmanship";
 import { NewsletterBand } from "@/components/home/newsletter-band";
 
@@ -15,14 +13,13 @@ import { NewsletterBand } from "@/components/home/newsletter-band";
 // FeaturedCollection (duplicated EditorialCampaign's single-collection
 // spotlight), GraphicBanner (copy-less filler), Lookbook (stock mood shots),
 // TestimonialsSection (placeholder customer quotes, not real reviews) and
-// InstagramGallery (placeholder posts/likes linking to "#").
+// InstagramGallery (placeholder posts/likes linking to "#"), EditorialCampaign
+// (Evening Wear spotlight) and CollectionBanner ("Seven Ways To Dress").
 export default function Home() {
   return (
     <>
       <Hero />
-      <EditorialCampaign />
       <ProductShowcase />
-      <CollectionBanner />
       <Craftsmanship />
       <NewsletterBand />
     </>
